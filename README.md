@@ -103,3 +103,20 @@ A aplicação guia o utilizador por 4 etapas:
 ## 📄 Licença
 
 MIT
+
+
+## ✅ Melhorias Cloudflare
+
+- Removida a flag `nodejs_compat` para correr em modo nativo Workers (mais leve e rápido).
+- Novo endpoint de monitorização: `GET /health`.
+- Headers de segurança/CORS aplicados de forma consistente.
+- Envio de email com remetente configurável por variáveis de ambiente:
+
+```bash
+npx wrangler secret put MAIL_FROM
+npx wrangler secret put MAIL_FROM_NAME
+```
+
+Exemplo:
+- `MAIL_FROM = noreply@teu-dominio.pt`
+- `MAIL_FROM_NAME = GrupoFácil`
