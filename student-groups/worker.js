@@ -93,6 +93,17 @@ const HTML_PAGE = `<!DOCTYPE html>
       margin-top: 2px;
     }
 
+    .cf-badge {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--accent3);
+      border: 1px solid rgba(67,233,123,0.35);
+      background: rgba(67,233,123,0.08);
+      border-radius: 999px;
+      padding: 6px 10px;
+      white-space: nowrap;
+    }
+
     /* Steps indicator */
     .steps {
       display: flex;
@@ -641,6 +652,7 @@ const HTML_PAGE = `<!DOCTYPE html>
       <h1>GrupoFácil</h1>
       <p>Gestor de grupos para professores</p>
     </div>
+    <div class="cf-badge">Cloudflare Compatible</div>
   </div>
 
   <!-- Steps -->
@@ -649,6 +661,14 @@ const HTML_PAGE = `<!DOCTYPE html>
     <div class="step" id="step-2">② Configurar</div>
     <div class="step" id="step-3">③ Organizar</div>
     <div class="step" id="step-4">④ Exportar</div>
+  </div>
+
+  <div class="card" style="padding:12px 16px;">
+    <div style="display:flex; gap:18px; flex-wrap:wrap; font-size:12px; color:var(--muted);">
+      <span>☁️ Cloudflare Workers ready</span>
+      <span>🛡️ Validação no envio de email</span>
+      <span>📡 Endpoint <code>/health</code> para monitorização</span>
+    </div>
   </div>
 
   <!-- Panel 1: Import -->
@@ -772,7 +792,7 @@ const HTML_PAGE = `<!DOCTYPE html>
         </div>
       </div>
       <div class="btn-group">
-        <button class="btn btn-success" onclick="exportAndSend()">
+        <button class="btn btn-success" onclick="exportAndSend(this)">
           ⬇️ Exportar Excel &amp; Enviar Email
         </button>
         <button class="btn btn-secondary" onclick="downloadExcelOnly()">
@@ -1229,7 +1249,7 @@ function downloadExcelOnly() {
   toast('Excel exportado com sucesso!', 'success');
 }
 
-async function exportAndSend() {
+async function exportAndSend(btnEl) {
   const email = document.getElementById('teacher-email').value.trim();
   const name = document.getElementById('teacher-name').value.trim();
   const className = document.getElementById('class-name').value.trim();
@@ -1245,7 +1265,7 @@ async function exportAndSend() {
     \`Grupo \${gid.replace('G','')}: \${members.join(', ')}\`
   ).join('\\n');
 
-  const btn = event.target;
+  const btn = btnEl || document.querySelector('.btn.btn-success[onclick*="exportAndSend"]');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> A enviar...';
 
@@ -1326,7 +1346,15 @@ document.addEventListener('dragend', function(e) {
 </html>`;
 
 // ─── Email sending via Mailchannels (free for CF Workers) ──────────────────
-async function sendEmail({ to, teacherName, className, groupsSummary, excelBase64, groupCount, studentCount }) {
+async function sendEmail(payload, env) {
+  const { to, teacherName, className, groupsSummary, excelBase64, groupCount, studentCount } = payload || {};
+
+  if (!to || !excelBase64 || !Number.isFinite(groupCount) || !Number.isFinite(studentCount)) {
+    return { ok: false, error: "Payload de email inválido" };
+  }
+
+  const fromEmail = env?.MAIL_FROM || "noreply@grupofacil.workers.dev";
+  const fromName = env?.MAIL_FROM_NAME || "GrupoFácil";
   // Build email body
   const subject = `Grupos Criados${className ? ' — ' + className : ''}`;
   const textBody = `Olá${teacherName ? ' ' + teacherName : ''},
@@ -1370,7 +1398,7 @@ GrupoFácil — Gestor de Grupos`;
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       personalizations: [{ to: [{ email: to, name: teacherName || to }] }],
-      from: { email: 'noreply@grupofacil.workers.dev', name: 'GrupoFácil' },
+      from: { email: fromEmail, name: fromName },
       subject,
       content: [
         { type: 'text/plain', value: textBody },
@@ -1399,11 +1427,24 @@ GrupoFácil — Gestor de Grupos`;
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    const commonHeaders = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'X-Content-Type-Options': 'nosniff'
+    };
+
+    // Healthcheck endpoint (Cloudflare uptime monitor)
+    if (url.pathname === '/health') {
+      return new Response(JSON.stringify({ ok: true, service: 'grupofacil' }), {
+        headers: { ...commonHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
     // Serve frontend
     if (url.pathname === '/' || url.pathname === '') {
       return new Response(HTML_PAGE, {
-        headers: { 'Content-Type': 'text/html; charset=utf-8' }
+        headers: { ...commonHeaders, 'Content-Type': 'text/html; charset=utf-8' }
       });
     }
 
@@ -1411,32 +1452,23 @@ export default {
     if (url.pathname === '/api/send-email' && request.method === 'POST') {
       try {
         const body = await request.json();
-        const result = await sendEmail(body);
+        const result = await sendEmail(body, env);
         return new Response(JSON.stringify(result), {
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-          }
+          headers: { ...commonHeaders, 'Content-Type': 'application/json' }
         });
       } catch (err) {
         return new Response(JSON.stringify({ ok: false, error: err.message }), {
           status: 500,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { ...commonHeaders, 'Content-Type': 'application/json' }
         });
       }
     }
 
     // CORS preflight
     if (request.method === 'OPTIONS') {
-      return new Response(null, {
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type'
-        }
-      });
+      return new Response(null, { headers: commonHeaders });
     }
 
-    return new Response('Not Found', { status: 404 });
+    return new Response('Not Found', { status: 404, headers: commonHeaders });
   }
 };
