@@ -1,0 +1,12 @@
+name = "student-groups"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+[build]
+command = ""
+
+# Optional: custom domain
+# [[routes]]
+# pattern = "grupofacil.exemplo.pt/*"
+# zone_name = "exemplo.pt"
