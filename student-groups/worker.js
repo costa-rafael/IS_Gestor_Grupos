@@ -6,7 +6,7 @@ const HTML_PAGE = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>GrupoFácil · Gestor de Grupos</title>
+  <title>Gestor de Grupos de Alunos</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -14,16 +14,18 @@ const HTML_PAGE = `<!DOCTYPE html>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0a0a0f;
-      --surface: #12121a;
-      --surface2: #1a1a26;
-      --border: #2a2a3d;
-      --accent: #6c63ff;
-      --accent2: #ff6b6b;
-      --accent3: #43e97b;
-      --text: #e8e8f0;
-      --muted: #6b6b8a;
-      --radius: 12px;
+      --bg: #080a14;
+      --surface: rgba(14, 20, 38, 0.86);
+      --surface2: rgba(24, 33, 58, 0.92);
+      --surface-strong: #101a33;
+      --border: rgba(150, 166, 215, 0.24);
+      --accent: #6f7bff;
+      --accent2: #ff7db5;
+      --accent3: #49f5b2;
+      --text: #ecf1ff;
+      --muted: #9caad9;
+      --shadow: 0 14px 40px rgba(4, 8, 18, 0.35);
+      --radius: 16px;
     }
 
     html, body {
@@ -41,9 +43,22 @@ const HTML_PAGE = `<!DOCTYPE html>
       position: fixed;
       inset: 0;
       background:
-        radial-gradient(ellipse 80% 50% at 20% 20%, rgba(108,99,255,0.08) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(255,107,107,0.06) 0%, transparent 60%),
-        radial-gradient(ellipse 40% 60% at 60% 10%, rgba(67,233,123,0.04) 0%, transparent 60%);
+        radial-gradient(ellipse 70% 45% at 12% 18%, rgba(111,123,255,0.2) 0%, transparent 68%),
+        radial-gradient(ellipse 55% 40% at 88% 80%, rgba(255,125,181,0.14) 0%, transparent 70%),
+        radial-gradient(ellipse 45% 55% at 55% 0%, rgba(73,245,178,0.1) 0%, transparent 72%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(129, 146, 198, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(129, 146, 198, 0.05) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: radial-gradient(circle at center, black 45%, transparent 100%);
       pointer-events: none;
       z-index: 0;
     }
@@ -62,16 +77,20 @@ const HTML_PAGE = `<!DOCTYPE html>
       display: flex;
       align-items: center;
       gap: 16px;
-      margin-bottom: 40px;
-      padding-bottom: 24px;
-      border-bottom: 1px solid var(--border);
+      margin-bottom: 28px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, rgba(111,123,255,0.15), rgba(20,30,58,0.55));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
     }
 
     .logo {
       width: 44px;
       height: 44px;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border-radius: 10px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -89,19 +108,8 @@ const HTML_PAGE = `<!DOCTYPE html>
 
     .header-text p {
       font-size: 12px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-
-    .cf-badge {
-      margin-left: auto;
-      font-size: 11px;
-      color: var(--accent3);
-      border: 1px solid rgba(67,233,123,0.35);
-      background: rgba(67,233,123,0.08);
-      border-radius: 999px;
-      padding: 6px 10px;
-      white-space: nowrap;
+      color: #c8d4ff;
+      margin-top: 4px;
     }
 
     /* Steps indicator */
@@ -109,11 +117,12 @@ const HTML_PAGE = `<!DOCTYPE html>
       display: flex;
       gap: 0;
       margin-bottom: 36px;
-      background: var(--surface);
+      background: linear-gradient(135deg, rgba(16,26,50,0.78), rgba(13,20,38,0.86));
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: calc(var(--radius) - 2px);
       padding: 4px;
       width: fit-content;
+      box-shadow: var(--shadow);
     }
 
     .step {
@@ -156,6 +165,8 @@ const HTML_PAGE = `<!DOCTYPE html>
       border-radius: var(--radius);
       padding: 24px;
       margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(6px);
     }
 
     .card-title {
@@ -371,7 +382,7 @@ const HTML_PAGE = `<!DOCTYPE html>
     }
 
     .btn-primary {
-      background: var(--accent);
+      background: linear-gradient(130deg, var(--accent), #8f66ff);
       color: white;
     }
 
@@ -386,7 +397,7 @@ const HTML_PAGE = `<!DOCTYPE html>
     .btn-secondary:hover { border-color: var(--accent); }
 
     .btn-success {
-      background: var(--accent3);
+      background: linear-gradient(130deg, var(--accent3), #2dd89a);
       color: #0a0a0f;
     }
 
@@ -511,11 +522,37 @@ const HTML_PAGE = `<!DOCTYPE html>
       display: flex;
       gap: 20px;
       padding: 14px 20px;
-      background: var(--surface);
+      background: linear-gradient(145deg, rgba(20,31,56,0.8), rgba(15,23,42,0.88));
       border: 1px solid var(--border);
       border-radius: 10px;
       margin-bottom: 20px;
       flex-wrap: wrap;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .hero-chip {
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: linear-gradient(150deg, rgba(28,39,70,0.82), rgba(18,27,47,0.82));
+      font-size: 12px;
+      color: #cbdbff;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-chip strong {
+      display: block;
+      color: var(--text);
+      font-size: 14px;
+      font-family: 'Syne', sans-serif;
+      margin-bottom: 2px;
     }
 
     .stat {
@@ -649,10 +686,9 @@ const HTML_PAGE = `<!DOCTYPE html>
   <div class="header">
     <div class="logo">🎓</div>
     <div class="header-text">
-      <h1>GrupoFácil</h1>
+      <h1>Gestor de Grupos</h1>
       <p>Gestor de grupos para professores</p>
     </div>
-    <div class="cf-badge">Cloudflare Compatible</div>
   </div>
 
   <!-- Steps -->
@@ -663,12 +699,10 @@ const HTML_PAGE = `<!DOCTYPE html>
     <div class="step" id="step-4">④ Exportar</div>
   </div>
 
-  <div class="card" style="padding:12px 16px;">
-    <div style="display:flex; gap:18px; flex-wrap:wrap; font-size:12px; color:var(--muted);">
-      <span>☁️ Cloudflare Workers ready</span>
-      <span>🛡️ Validação no envio de email</span>
-      <span>📡 Endpoint <code>/health</code> para monitorização</span>
-    </div>
+  <div class="hero-strip">
+    <div class="hero-chip"><strong>🧭 Organização Inteligente</strong>Importa, configura e distribui alunos em poucos cliques.</div>
+    <div class="hero-chip"><strong>🧠 Fluxo Guiado</strong>4 etapas para importar, organizar e exportar sem fricção.</div>
+    <div class="hero-chip"><strong>✅ Fiável no Dia a Dia</strong>Validação de dados e exportação rápida para Excel.</div>
   </div>
 
   <!-- Panel 1: Import -->
@@ -679,7 +713,7 @@ const HTML_PAGE = `<!DOCTYPE html>
         <input type="file" id="file-input" accept=".xlsx,.xls,.csv" />
         <span class="upload-icon">📊</span>
         <h3>Arrasta o ficheiro ou clica para seleccionar</h3>
-        <p>Suporta ficheiros .xlsx, .xls e .csv<br>A primeira coluna deve conter os nomes dos alunos</p>
+        <p>Suporta ficheiros .xlsx, .xls e .csv<br>Detecta cabeçalhos automaticamente (ex.: Número, Nome)</p>
       </div>
     </div>
 
@@ -868,6 +902,89 @@ fileInput.addEventListener('change', e => {
   if (e.target.files[0]) parseFile(e.target.files[0]);
 });
 
+function normalizeHeader(text) {
+  return String(text || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+}
+
+function detectDelimiter(line) {
+  const candidates = [',', ';', '\t'];
+  let best = ',';
+  let maxCount = -1;
+  for (const d of candidates) {
+    const count = line.split(d).length - 1;
+    if (count > maxCount) { maxCount = count; best = d; }
+  }
+  return best;
+}
+
+function parseDelimitedRows(text) {
+  const lines = String(text || '').split(/\r?\n/).filter(l => l.trim());
+  if (!lines.length) return [];
+  const delimiter = detectDelimiter(lines[0]);
+  return lines.map(line => line.split(delimiter).map(c => c.trim()));
+}
+
+function looksLikeNumericCode(value) {
+  return /^\d+(?:[\s.-]\d+)*$/.test(String(value || '').trim());
+}
+
+function extractNamesFromRows(rows) {
+  if (!rows || !rows.length) return [];
+
+  const headerAliases = ['nome', 'nomes', 'name', 'names', 'aluno', 'alunos', 'student', 'students'];
+  let headerRow = -1;
+  let nameCol = -1;
+
+  for (let i = 0; i < Math.min(5, rows.length); i++) {
+    const row = rows[i] || [];
+    for (let c = 0; c < row.length; c++) {
+      const cell = normalizeHeader(row[c]);
+      if (headerAliases.includes(cell)) {
+        headerRow = i;
+        nameCol = c;
+        break;
+      }
+    }
+    if (headerRow !== -1) break;
+  }
+
+  const dataStart = headerRow !== -1 ? headerRow + 1 : 0;
+  const dataRows = rows.slice(dataStart).filter(r => Array.isArray(r) && r.length);
+  if (!dataRows.length) return [];
+
+  if (nameCol === -1) {
+    const maxCols = Math.max(...dataRows.map(r => r.length));
+    let bestCol = 0;
+    let bestScore = -Infinity;
+
+    for (let c = 0; c < maxCols; c++) {
+      let score = 0;
+      for (const row of dataRows.slice(0, 80)) {
+        const value = String(row[c] ?? '').trim();
+        if (!value) continue;
+        if (/[A-Za-zÀ-ÖØ-öø-ÿ]/.test(value)) score += 2;
+        if (looksLikeNumericCode(value)) score -= 1;
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        bestCol = c;
+      }
+    }
+    nameCol = bestCol;
+  }
+
+  const names = dataRows
+    .map(row => String(row[nameCol] ?? '').trim())
+    .filter(Boolean)
+    .filter(value => !looksLikeNumericCode(value));
+
+  return [...new Set(names)];
+}
+
 function parseFile(file) {
   const ext = file.name.split('.').pop().toLowerCase();
   const reader = new FileReader();
@@ -876,18 +993,16 @@ function parseFile(file) {
     try {
       let names = [];
       if (ext === 'csv') {
-        const text = e.target.result;
-        names = text.split(/\\r?\\n/).map(l => l.split(',')[0].trim()).filter(Boolean);
+        const rows = parseDelimitedRows(e.target.result);
+        names = extractNamesFromRows(rows);
       } else {
         const wb = XLSX.read(e.target.result, { type: 'array' });
         const ws = wb.Sheets[wb.SheetNames[0]];
-        const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
-        names = data.map(r => r[0]).filter(v => v && String(v).trim());
-        // skip header if it looks like one
-        if (names.length && /nome|aluno|name|student/i.test(names[0])) names.shift();
+        const data = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' });
+        names = extractNamesFromRows(data);
       }
 
-      if (names.length === 0) { toast('Nenhum aluno encontrado no ficheiro!', 'error'); return; }
+      if (names.length === 0) { toast('Nenhum nome de aluno encontrado no ficheiro!', 'error'); return; }
 
       students = names.map(n => String(n).trim());
       renderPreview();
@@ -1353,8 +1468,8 @@ async function sendEmail(payload, env) {
     return { ok: false, error: "Payload de email inválido" };
   }
 
-  const fromEmail = env?.MAIL_FROM || "noreply@grupofacil.workers.dev";
-  const fromName = env?.MAIL_FROM_NAME || "GrupoFácil";
+  const fromEmail = env?.MAIL_FROM || "noreply@gestor-grupos.local";
+  const fromName = env?.MAIL_FROM_NAME || "Gestor de Grupos";
   // Build email body
   const subject = `Grupos Criados${className ? ' — ' + className : ''}`;
   const textBody = `Olá${teacherName ? ' ' + teacherName : ''},
@@ -1369,12 +1484,12 @@ ${groupsSummary}
 
 Em anexo encontra o ficheiro Excel com os grupos formados.
 
-GrupoFácil — Gestor de Grupos`;
+Gestor de Grupos de Alunos`;
 
   const htmlBody = `
   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
     <div style="background: linear-gradient(135deg, #6c63ff, #ff6b6b); padding: 24px; border-radius: 12px 12px 0 0;">
-      <h1 style="color: white; margin: 0; font-size: 22px;">🎓 GrupoFácil</h1>
+      <h1 style="color: white; margin: 0; font-size: 22px;">🎓 Gestor de Grupos</h1>
       <p style="color: rgba(255,255,255,0.8); margin: 4px 0 0;">Gestor de Grupos para Professores</p>
     </div>
     <div style="background: #f9f9ff; padding: 24px; border-radius: 0 0 12px 12px; border: 1px solid #e0e0f0;">
@@ -1388,7 +1503,7 @@ GrupoFácil — Gestor de Grupos`;
       </div>
       <p>O ficheiro Excel com os grupos completos está em anexo.</p>
       <hr style="border: none; border-top: 1px solid #e0e0f0; margin: 20px 0;">
-      <p style="color: #999; font-size: 12px;">Enviado pelo GrupoFácil</p>
+      <p style="color: #999; font-size: 12px;">Enviado pelo Gestor de Grupos</p>
     </div>
   </div>`;
 

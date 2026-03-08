@@ -1,116 +1,90 @@
-# GrupoFácil · Gestor de Grupos de Alunos
+# Gestor de Grupos de Alunos
 
-Aplicação web para Cloudflare Workers que permite criar e gerir grupos de alunos a partir de ficheiros Excel.
+Aplicação web **serverless** para criação, organização e exportação de grupos de alunos, construída sobre **Cloudflare Workers**.
 
-## 🚀 Funcionalidades
+## Visão Geral
 
-- **Importação de alunos** via ficheiro `.xlsx`, `.xls` ou `.csv`
-- **Dois modos de criação de grupos:**
-  - 🎲 **Aleatório** — distribuição automática e balanceada
-  - ✋ **Manual** — drag & drop para organização personalizada
-- **Configuração flexível** — por número de grupos ou por alunos por grupo
-- **Validação** — indicação visual de alunos não atribuídos
-- **Exportação Excel** — ficheiro com todos os grupos organizados
-- **Notificação por email** — envio automático para o professor com o Excel em anexo
+A aplicação simplifica a formação de grupos em contexto letivo com um fluxo em 4 passos:
 
-## 📁 Estrutura do Projecto
+1. **Importar** alunos via Excel/CSV
+2. **Configurar** estratégia de agrupamento
+3. **Organizar** automaticamente ou por drag & drop
+4. **Exportar** resultados para Excel e envio por email
 
-```
+---
+
+## Principais Funcionalidades
+
+- Importação de ficheiros `.xlsx`, `.xls` e `.csv`
+- Deteção automática de cabeçalho na primeira linha (ex.: `Nome`)
+- Dois modos de agrupamento:
+  - 🎲 **Aleatório** (balanceado)
+  - ✋ **Manual** (drag & drop)
+- Configuração por:
+  - número de grupos, ou
+  - número de alunos por grupo
+- Indicação de alunos não atribuídos
+- Exportação para Excel com todos os grupos
+- Envio opcional por email (MailChannels API)
+- Endpoint técnico de monitorização: `GET /health`
+
+---
+
+## Stack Técnica
+
+- **Runtime:** Cloudflare Workers
+- **Tooling:** Wrangler v3
+- **UI:** HTML + CSS + JavaScript vanilla (single-file worker)
+- **Leitura/Exportação Excel:** SheetJS (`xlsx` via CDN)
+
+---
+
+## Estrutura do Projeto
+
+```text
 student-groups/
-├── worker.js       # Worker principal (frontend + backend)
-├── wrangler.toml   # Configuração do Cloudflare Workers
-├── package.json
+├── worker.js        # Worker principal (frontend + endpoints)
+├── wrangler.toml    # Configuração do deployment
+├── package.json     # Scripts de desenvolvimento/deploy
 └── README.md
 ```
 
-## ⚙️ Instalação e Deploy
+---
 
-### Pré-requisitos
-- Conta Cloudflare (gratuita)
+## Requisitos
+
 - Node.js 18+
+- Conta Cloudflare
+- Wrangler autenticado
 
-### Passos
+---
+
+## Como Executar Localmente
 
 ```bash
-# 1. Instalar dependências
 npm install
-
-# 2. Autenticar no Cloudflare
-npx wrangler login
-
-# 3. Desenvolvimento local
 npm run dev
-# Abre em http://localhost:8787
-
-# 4. Deploy para produção
-npm run deploy
-# Disponível em https://student-groups.<teu-subdomínio>.workers.dev
 ```
 
-## 📧 Configuração do Email
+Aplicação disponível em `http://localhost:8787`.
 
-O Worker utiliza a **API MailChannels** que é gratuita para Cloudflare Workers (sem necessidade de conta adicional).
+---
 
-> **Nota:** O MailChannels requer que o domínio de envio tenha SPF/DKIM configurado. Para a Workers domain (`.workers.dev`), pode ser necessário configurar um **SPF record** no teu domínio ou utilizar um domínio personalizado.
-
-### Alternativa: SendGrid / Mailgun
-
-Se preferires usar outra API de email, edita a função `sendEmail` em `worker.js`:
-
-```javascript
-// Exemplo com SendGrid
-async function sendEmail({ to, ... }, apiKey) {
-  return fetch('https://api.sendgrid.com/v3/mail/send', {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + apiKey,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ /* payload SendGrid */ })
-  });
-}
-```
-
-Para guardar a API key de forma segura, usa variáveis de ambiente Wrangler:
+## Deploy
 
 ```bash
-npx wrangler secret put SENDGRID_API_KEY
+npm run deploy
 ```
 
-E acede via `env.SENDGRID_API_KEY` no Worker.
+Após deploy, a aplicação fica disponível no domínio `*.workers.dev` configurado na tua conta.
 
-## 📊 Formato do Ficheiro Excel
+---
 
-O ficheiro de importação deve ter:
-- **Coluna A**: nomes dos alunos (um por linha)
-- A primeira linha pode ser cabeçalho (ex: "Nome") — é detectada e ignorada automaticamente
+## Configuração de Email
 
-### Exemplo:
-| Nome |
-|------|
-| Ana Silva |
-| Bruno Costa |
-| Carla Mendes |
+Por omissão, o projeto usa **MailChannels** para envio de email.
 
-## 🎨 Interface
-
-A aplicação guia o utilizador por 4 etapas:
-1. **Importar** — carregar ficheiro Excel
-2. **Configurar** — definir número de grupos e modo
-3. **Organizar** — ajustar grupos (drag & drop em modo manual)
-4. **Exportar** — download Excel + envio de email
-
-## 📄 Licença
-
-MIT
-
-
-## ✅ Melhorias Cloudflare
-
-- Removida a flag `nodejs_compat` para correr em modo nativo Workers (mais leve e rápido).
-- Novo endpoint de monitorização: `GET /health`.
-- Headers de segurança/CORS aplicados de forma consistente.
-- Envio de email com remetente configurável por variáveis de ambiente:
+### Variáveis recomendadas
 
 ```bash
 npx wrangler secret put MAIL_FROM
@@ -118,5 +92,55 @@ npx wrangler secret put MAIL_FROM_NAME
 ```
 
 Exemplo:
-- `MAIL_FROM = noreply@teu-dominio.pt`
-- `MAIL_FROM_NAME = GrupoFácil`
+
+- `MAIL_FROM=noreply@teu-dominio.pt`
+- `MAIL_FROM_NAME=Gestor de Grupos`
+
+> Nota: para maior entregabilidade, usa domínio com SPF/DKIM devidamente configurado.
+
+---
+
+## Formato Esperado do Ficheiro de Alunos
+
+- Pode ter múltiplas colunas (ex.: `Número`, `Nome`)
+- A app tenta detetar automaticamente a coluna de nomes
+- Cabeçalhos são identificados e ignorados na leitura dos dados
+
+Exemplo:
+
+| Nome |
+|---|
+| Ana Silva |
+| Bruno Costa |
+| Carla Mendes |
+
+---
+
+## Operação e Qualidade
+
+- Interface orientada por etapas para reduzir erros operacionais
+- Feedback visual por toasts e indicadores de estado
+- Compatível com execução nativa em Workers (sem `nodejs_compat`)
+
+---
+
+## Segurança e Boas Práticas
+
+- Uso de secrets via Wrangler para credenciais sensíveis
+- Endpoint `/health` para integração com monitorização externa
+- Headers de segurança/CORS aplicados no worker
+
+---
+
+## Roadmap Sugerido
+
+- Persistência de sessões (KV / D1)
+- Histórico de turmas e templates de grupos
+- Regras de equilíbrio (ex.: género, desempenho, afinidade)
+- Internacionalização (PT/EN)
+
+---
+
+## Licença
+
+MIT
