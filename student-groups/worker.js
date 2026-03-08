@@ -1,4 +1,4 @@
-// Cloudflare Worker - Student Groups Manager
+// Student Groups Manager
 // Deploy with: wrangler deploy
 
 const HTML_PAGE = `<!DOCTYPE html>
@@ -9,28 +9,28 @@ const HTML_PAGE = `<!DOCTYPE html>
   <title>Gestor de Grupos de Alunos</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #080a14;
-      --surface: rgba(14, 20, 38, 0.86);
-      --surface2: rgba(24, 33, 58, 0.92);
-      --surface-strong: #101a33;
-      --border: rgba(150, 166, 215, 0.24);
+      --bg: #f3f6ff;
+      --surface: rgba(255, 255, 255, 0.88);
+      --surface2: #eef2ff;
+      --surface-strong: #dfe7ff;
+      --border: rgba(74, 96, 188, 0.25);
       --accent: #6f7bff;
       --accent2: #ff7db5;
       --accent3: #49f5b2;
-      --text: #ecf1ff;
-      --muted: #9caad9;
-      --shadow: 0 14px 40px rgba(4, 8, 18, 0.35);
+      --text: #1e2b58;
+      --muted: #5c6ca7;
+      --shadow: 0 10px 24px rgba(37, 62, 146, 0.14);
       --radius: 16px;
     }
 
     html, body {
       height: 100%;
-      background: var(--bg);
+      background: linear-gradient(180deg, #f8faff 0%, #eef3ff 100%);
       color: var(--text);
       font-family: 'DM Mono', monospace;
       font-size: 14px;
@@ -43,9 +43,9 @@ const HTML_PAGE = `<!DOCTYPE html>
       position: fixed;
       inset: 0;
       background:
-        radial-gradient(ellipse 70% 45% at 12% 18%, rgba(111,123,255,0.2) 0%, transparent 68%),
-        radial-gradient(ellipse 55% 40% at 88% 80%, rgba(255,125,181,0.14) 0%, transparent 70%),
-        radial-gradient(ellipse 45% 55% at 55% 0%, rgba(73,245,178,0.1) 0%, transparent 72%);
+        radial-gradient(ellipse 70% 45% at 12% 18%, rgba(111,123,255,0.12) 0%, transparent 68%),
+        radial-gradient(ellipse 55% 40% at 88% 80%, rgba(255,125,181,0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 45% 55% at 55% 0%, rgba(73,245,178,0.08) 0%, transparent 72%);
       pointer-events: none;
       z-index: 0;
     }
@@ -108,7 +108,7 @@ const HTML_PAGE = `<!DOCTYPE html>
 
     .header-text p {
       font-size: 12px;
-      color: #c8d4ff;
+      color: var(--muted);
       margin-top: 4px;
     }
 
@@ -137,7 +137,7 @@ const HTML_PAGE = `<!DOCTYPE html>
     }
 
     .step.active {
-      background: var(--accent);
+      background: linear-gradient(130deg, var(--accent), #8f66ff);
       color: white;
     }
 
@@ -543,7 +543,7 @@ const HTML_PAGE = `<!DOCTYPE html>
       border-radius: 12px;
       background: linear-gradient(150deg, rgba(28,39,70,0.82), rgba(18,27,47,0.82));
       font-size: 12px;
-      color: #cbdbff;
+      color: #42538d;
       box-shadow: var(--shadow);
     }
 
@@ -686,7 +686,7 @@ const HTML_PAGE = `<!DOCTYPE html>
   <div class="header">
     <div class="logo">🎓</div>
     <div class="header-text">
-      <h1>Gestor de Grupos</h1>
+      <h1>Organizador de Turmas</h1>
       <p>Gestor de grupos para professores</p>
     </div>
   </div>
@@ -1490,7 +1490,7 @@ Gestor de Grupos de Alunos`;
   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
     <div style="background: linear-gradient(135deg, #6c63ff, #ff6b6b); padding: 24px; border-radius: 12px 12px 0 0;">
       <h1 style="color: white; margin: 0; font-size: 22px;">🎓 Gestor de Grupos</h1>
-      <p style="color: rgba(255,255,255,0.8); margin: 4px 0 0;">Gestor de Grupos para Professores</p>
+      <p style="color: rgba(255,255,255,0.8); margin: 4px 0 0;">Plataforma de criação de grupos para professores</p>
     </div>
     <div style="background: #f9f9ff; padding: 24px; border-radius: 0 0 12px 12px; border: 1px solid #e0e0f0;">
       <p>Olá${teacherName ? ' <strong>' + teacherName + '</strong>' : ''},</p>
@@ -1507,7 +1507,7 @@ Gestor de Grupos de Alunos`;
     </div>
   </div>`;
 
-  // Try MailChannels (available for Cloudflare Workers)
+  // Try MailChannels provider
   const response = await fetch('https://api.mailchannels.net/tx/v1/send', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1549,9 +1549,9 @@ export default {
       'X-Content-Type-Options': 'nosniff'
     };
 
-    // Healthcheck endpoint (Cloudflare uptime monitor)
+    // Healthcheck endpoint
     if (url.pathname === '/health') {
-      return new Response(JSON.stringify({ ok: true, service: 'grupofacil' }), {
+      return new Response(JSON.stringify({ ok: true, service: 'gestor-grupos' }), {
         headers: { ...commonHeaders, 'Content-Type': 'application/json' }
       });
     }

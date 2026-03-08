@@ -1,6 +1,6 @@
 # Gestor de Grupos de Alunos
 
-Aplicação web **serverless** para criação, organização e exportação de grupos de alunos, construída sobre **Cloudflare Workers**.
+Aplicação web para criação, organização e exportação de grupos de alunos.
 
 ## Visão Geral
 
@@ -32,10 +32,9 @@ A aplicação simplifica a formação de grupos em contexto letivo com um fluxo 
 
 ## Stack Técnica
 
-- **Runtime:** Cloudflare Workers
-- **Tooling:** Wrangler v3
-- **UI:** HTML + CSS + JavaScript vanilla (single-file worker)
-- **Leitura/Exportação Excel:** SheetJS (`xlsx` via CDN)
+- **Runtime:** JavaScript serverless
+- **UI:** HTML + CSS + JavaScript vanilla (single-file app)
+- **Leitura/Exportação Excel:** SheetJS (`xlsx`)
 
 ---
 
@@ -59,6 +58,8 @@ student-groups/
 
 ---
 
+---
+
 ## Como Executar Localmente
 
 ```bash
@@ -76,7 +77,7 @@ Aplicação disponível em `http://localhost:8787`.
 npm run deploy
 ```
 
-Após deploy, a aplicação fica disponível no domínio `*.workers.dev` configurado na tua conta.
+Publica no teu ambiente serverless preferido e configura as variáveis de email.
 
 ---
 
