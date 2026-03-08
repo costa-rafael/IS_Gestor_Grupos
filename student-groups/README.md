@@ -53,6 +53,10 @@ student-groups/
 ## Requisitos
 
 - Node.js 18+
+- Conta Cloudflare
+- Wrangler autenticado
+
+---
 
 ---
 
