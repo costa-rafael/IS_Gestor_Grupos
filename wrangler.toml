@@ -1,9 +1,9 @@
 name = "gestorgrupos"
-main = "worker.js"
+main = "./worker.js"
 compatibility_date = "2024-11-01"
 workers_dev = true
 [build]
-command = ""
+command = "npm install"
 
 # Optional: custom domain
 # [[routes]]
