@@ -10,16 +10,16 @@ const APP_HTML = `<!DOCTYPE html>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0f1117;--surface:#171b25;--surface2:#1e2433;--surface3:#252c3d;
-  --border:#2a3248;--border2:#364060;
-  --teal:#2dd4bf;--teal-dim:rgba(45,212,191,0.1);--teal-glow:rgba(45,212,191,0.22);
-  --amber:#f59e0b;--amber-dim:rgba(245,158,11,0.1);
-  --red:#ef4444;--red-dim:rgba(239,68,68,0.1);
-  --green:#22c55e;--green-dim:rgba(34,197,94,0.1);
-  --text:#e8eaf0;--text2:#8b95b0;--text3:#4a5470;
-  --r:6px;
+  --bg:#eef3f9;--surface:rgba(255,255,255,0.72);--surface2:rgba(255,255,255,0.88);--surface3:#f4f7fc;
+  --border:rgba(148,163,184,0.3);--border2:rgba(100,116,139,0.38);
+  --teal:#0f766e;--teal-dim:rgba(15,118,110,0.08);--teal-glow:rgba(15,118,110,0.14);
+  --amber:#b45309;--amber-dim:rgba(245,158,11,0.12);
+  --red:#b91c1c;--red-dim:rgba(239,68,68,0.1);
+  --green:#166534;--green-dim:rgba(34,197,94,0.1);
+  --text:#1e293b;--text2:#475569;--text3:#64748b;
+  --r:10px;
 }
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Bricolage Grotesque',sans-serif;font-size:14px;line-height:1.5;overflow-x:hidden}
+html,body{height:100%;background:radial-gradient(circle at top left,#ffffff 0,#edf3ff 48%,#e4ebf7 100%);color:var(--text);font-family:'Bricolage Grotesque',sans-serif;font-size:14px;line-height:1.5;overflow-x:hidden}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
@@ -27,7 +27,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Bricol
 .shell{display:flex;height:100vh;overflow:hidden}
 
 /* SIDEBAR */
-.sidebar{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column}
+.sidebar{width:240px;flex-shrink:0;background:var(--surface);backdrop-filter:blur(14px);border-right:1px solid var(--border);display:flex;flex-direction:column}
 .sidebar-logo{padding:24px 20px 18px;border-bottom:1px solid var(--border)}
 .logo-mark{display:flex;align-items:center;gap:10px;margin-bottom:4px}
 .logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--teal),#0ea5e9);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
@@ -45,7 +45,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Bricol
 
 /* MAIN */
 .main{flex:1;overflow:hidden;display:flex;flex-direction:column}
-.topbar{height:54px;flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:16px}
+.topbar{height:58px;flex-shrink:0;background:var(--surface);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:16px}
 .topbar-title{font-size:15px;font-weight:700}
 .topbar-sub{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3)}
 .topbar-right{margin-left:auto;display:flex;gap:8px}
@@ -182,7 +182,7 @@ tbody tr.hid{display:none}
 
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:var(--r);border:1px solid transparent;font-family:'Bricolage Grotesque',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;text-decoration:none}
-.btn-primary{background:var(--teal);color:#000;border-color:var(--teal)}
+.btn-primary{background:var(--teal);color:#fff;border-color:var(--teal)}
 .btn-primary:hover{background:#2bc5b0;transform:translateY(-1px)}
 .btn-ghost{background:var(--surface2);color:var(--text);border-color:var(--border)}
 .btn-ghost:hover{background:var(--surface3);border-color:var(--border2)}
@@ -195,7 +195,7 @@ tbody tr.hid{display:none}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:18px}
 
 /* MODAL */
-.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:500;align-items:center;justify-content:center}
+.mbg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.28);backdrop-filter:blur(4px);z-index:500;align-items:center;justify-content:center}
 .mbg.open{display:flex}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:30px;max-width:420px;width:90%;animation:mIn .2s ease}
 @keyframes mIn{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
@@ -220,20 +220,20 @@ tbody tr.hid{display:none}
 <nav class="sidebar">
   <div class="sidebar-logo">
     <div class="logo-mark">
-      <div class="logo-icon">🎓</div>
+      <div class="logo-icon">GF</div>
       <span class="logo-name">GroupForge</span>
     </div>
     <div class="logo-sub">Organizador de Turmas</div>
   </div>
   <div class="sidebar-nav">
     <div class="nav-sep">Fluxo</div>
-    <div class="nav-item active" data-step="1" onclick="navTo(1)"><span class="ni">📂</span>Importar<span class="nb" id="nb1">—</span></div>
-    <div class="nav-item" data-step="2" onclick="navTo(2)"><span class="ni">☑️</span>Seleccionar<span class="nb" id="nb2">—</span></div>
-    <div class="nav-item" data-step="3" onclick="navTo(3)"><span class="ni">⚙️</span>Configurar<span class="nb" id="nb3">—</span></div>
-    <div class="nav-item" data-step="4" onclick="navTo(4)"><span class="ni">🗂️</span>Organizar<span class="nb" id="nb4">—</span></div>
-    <div class="nav-item" data-step="5" onclick="navTo(5)"><span class="ni">📤</span>Exportar<span class="nb" id="nb5">—</span></div>
+    <div class="nav-item active" data-step="1" onclick="navTo(1)"><span class="ni">01</span>Importar<span class="nb" id="nb1">—</span></div>
+    <div class="nav-item" data-step="2" onclick="navTo(2)"><span class="ni">02</span>Seleccionar<span class="nb" id="nb2">—</span></div>
+    <div class="nav-item" data-step="3" onclick="navTo(3)"><span class="ni">03</span>Configurar<span class="nb" id="nb3">—</span></div>
+    <div class="nav-item" data-step="4" onclick="navTo(4)"><span class="ni">04</span>Organizar<span class="nb" id="nb4">—</span></div>
+    <div class="nav-item" data-step="5" onclick="navTo(5)"><span class="ni">05</span>Exportar<span class="nb" id="nb5">—</span></div>
     <div class="nav-sep" style="margin-top:12px">Sessão</div>
-    <div class="nav-item" onclick="resetSession()"><span class="ni">↺</span>Nova Sessão</div>
+    <div class="nav-item" onclick="resetSession()"><span class="ni">S</span>Nova Sessão</div>
   </div>
   <div class="sidebar-footer" id="sfoot">Sem dados importados</div>
 </nav>
@@ -246,7 +246,7 @@ tbody tr.hid{display:none}
       <div class="topbar-sub" id="tsub">Passo 1 de 5</div>
     </div>
     <div class="topbar-right">
-      <button class="btn btn-ghost btn-sm" onclick="resetSession()">↺ Reiniciar</button>
+      <button class="btn btn-ghost btn-sm" onclick="resetSession()">Reiniciar</button>
     </div>
   </div>
   <div class="prog-wrap"><div class="prog-fill" id="gprog" style="width:20%"></div></div>
@@ -258,19 +258,19 @@ tbody tr.hid{display:none}
       <div class="ph"><div class="ph-title">Importar Lista de Alunos</div><div class="ph-desc">Carrega um ficheiro Excel ou CSV. A aplicação detecta automaticamente as colunas de número, nome e email.</div></div>
       <div class="dz" id="dz">
         <input type="file" id="fi" accept=".xlsx,.xls,.csv"/>
-        <span class="dz-icon">📊</span>
+        <span class="dz-icon"></span>
         <div class="dz-title">Arrasta o ficheiro ou clica para seleccionar</div>
         <div class="dz-sub">Detecção automática de colunas — Número, Nome, Email...</div>
         <div class="dz-fmts"><span class="fmt">.xlsx</span><span class="fmt">.xls</span><span class="fmt">.csv</span></div>
       </div>
-      <div class="info-box"><span>💡</span><span>Os dados são processados localmente no teu browser. Nenhuma informação é enviada para servidores externos.</span></div>
+      <div class="info-box"><span>i</span><span>Os dados são processados localmente no teu browser. Nenhuma informação é enviada para servidores externos.</span></div>
     </div>
 
     <!-- P2: SELECCIONAR -->
     <div class="panel" id="panel-2">
       <div class="ph"><div class="ph-title">Seleccionar Alunos</div><div class="ph-desc">Escolhe quais os alunos que participam. Podes excluir ausentes ou alunos que não devem ser agrupados.</div></div>
       <div class="atoolbar">
-        <div class="srch-wrap"><span class="srch-ico">🔍</span><input class="srch" id="srch" type="text" placeholder="Pesquisar por nome ou número..." oninput="filterT()"/></div>
+        <div class="srch-wrap"><span class="srch-ico"></span><input class="srch" id="srch" type="text" placeholder="Pesquisar por nome ou número..." oninput="filterT()"/></div>
         <button class="btn btn-ghost btn-sm" onclick="selAll(true)">Todos</button>
         <button class="btn btn-ghost btn-sm" onclick="selAll(false)">Nenhum</button>
         <span class="sel-lbl" id="sellbl">0 sel.</span>
@@ -285,8 +285,8 @@ tbody tr.hid{display:none}
         </table>
       </div>
       <div class="btn-row">
-        <button class="btn btn-ghost" onclick="navTo(1)">← Voltar</button>
-        <button class="btn btn-primary" id="btn2cfg" onclick="navTo(3)" disabled>Configurar →</button>
+        <button class="btn btn-ghost" onclick="navTo(1)">Voltar</button>
+        <button class="btn btn-primary" id="btn2cfg" onclick="navTo(3)" disabled>Configurar</button>
       </div>
     </div>
 
@@ -296,8 +296,8 @@ tbody tr.hid{display:none}
       <div style="margin-bottom:18px">
         <div class="fl" style="margin-bottom:10px">Modo de distribuição</div>
         <div class="cfg-grid">
-          <div class="cfg-card active" id="cfgauto" onclick="setDist('auto')"><div class="cfg-icon">🎲</div><div class="cfg-title">Distribuição Automática</div><div class="cfg-desc">Alunos distribuídos aleatoriamente pelos grupos.</div></div>
-          <div class="cfg-card" id="cfgmanual" onclick="setDist('manual')"><div class="cfg-icon">✋</div><div class="cfg-title">Distribuição Manual</div><div class="cfg-desc">Arrasta cada aluno para o grupo pretendido.</div></div>
+          <div class="cfg-card active" id="cfgauto" onclick="setDist('auto')"><div class="cfg-icon">A</div><div class="cfg-title">Distribuição Automática</div><div class="cfg-desc">Alunos distribuídos aleatoriamente pelos grupos.</div></div>
+          <div class="cfg-card" id="cfgmanual" onclick="setDist('manual')"><div class="cfg-icon">M</div><div class="cfg-title">Distribuição Manual</div><div class="cfg-desc">Arrasta cada aluno para o grupo pretendido.</div></div>
         </div>
       </div>
       <div class="div"></div>
@@ -319,8 +319,8 @@ tbody tr.hid{display:none}
       <div class="fl" style="margin-bottom:10px">Nomes dos grupos <span class="tag">opcional</span></div>
       <div id="gnameinputs"></div>
       <div class="btn-row">
-        <button class="btn btn-ghost" onclick="navTo(2)">← Voltar</button>
-        <button class="btn btn-primary" onclick="generate()">Criar Grupos →</button>
+        <button class="btn btn-ghost" onclick="navTo(2)">Voltar</button>
+        <button class="btn btn-primary" onclick="generate()">Criar Grupos</button>
       </div>
     </div>
 
@@ -334,14 +334,14 @@ tbody tr.hid{display:none}
       </div>
       <div class="org-layout">
         <div class="org-pool" id="poolpanel">
-          <div class="pool-head"><span class="pool-title">📋 Banca de Alunos</span><span class="pool-ct" id="poolct">0</span></div>
+          <div class="pool-head"><span class="pool-title">Banca de Alunos</span><span class="pool-ct" id="poolct">0</span></div>
           <div class="pool-list" id="poollist" ondragover="event.preventDefault()" ondrop="dropPool(event)"></div>
         </div>
         <div class="groups-right">
           <div class="groups-topbar">
-            <button class="btn btn-ghost btn-sm" onclick="shuffle()">🔀 Redistribuir</button>
+            <button class="btn btn-ghost btn-sm" onclick="shuffle()">Redistribuir</button>
             <button class="btn btn-ghost btn-sm" onclick="addGrp()">＋ Novo Grupo</button>
-            <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="openConfirm()">Finalizar →</button>
+            <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="openConfirm()">Finalizar</button>
           </div>
           <div class="gsgrid" id="gsgrid"></div>
         </div>
@@ -354,9 +354,9 @@ tbody tr.hid{display:none}
       <div class="stats-row" id="estats"></div>
       <div class="exp-block" id="expsummary"></div>
       <div class="btn-row" style="margin-bottom:28px">
-        <button class="btn btn-green" onclick="dlXls()">⬇ Exportar Excel</button>
-        <button class="btn btn-ghost" onclick="navTo(4)">← Voltar</button>
-        <button class="btn btn-ghost" style="margin-left:auto" onclick="resetSession()">↺ Nova Sessão</button>
+        <button class="btn btn-green" onclick="dlXls()">Exportar Excel</button>
+        <button class="btn btn-ghost" onclick="navTo(4)">Voltar</button>
+        <button class="btn btn-ghost" style="margin-left:auto" onclick="resetSession()">Nova Sessão</button>
       </div>
       <div class="div"></div>
       <div style="font-size:15px;font-weight:800;margin-bottom:14px">Exportar com Email <span class="tag">opcional</span></div>
@@ -364,7 +364,7 @@ tbody tr.hid{display:none}
         <div><div class="fl" style="margin-bottom:5px">Email do professor</div><input class="fi" type="email" id="expemail" placeholder="professor@escola.pt"/></div>
         <div><div class="fl" style="margin-bottom:5px">Turma / Disciplina</div><input class="fi" type="text" id="expturma" placeholder="Matemática — 10ºA"/></div>
       </div>
-      <button class="btn btn-ghost" onclick="dlXls(true)">📧 Exportar e Abrir Email</button>
+      <button class="btn btn-ghost" onclick="dlXls(true)">Exportar e Abrir Email</button>
     </div>
 
   </div>
@@ -387,7 +387,7 @@ tbody tr.hid{display:none}
 
 <script>
 // ── STATE
-let students=[], groups={}, pool=[], distMode='auto', cfgMethod='num-groups', gid=1, dragSrc=null, pendingFn=null;
+let students=[], groups={}, pool=[], distMode='auto', cfgMethod='num-groups', gid=1, dragSrc=null, pendingFn=null, currentStep=1;
 
 const COLORS=['#2dd4bf','#818cf8','#f472b6','#fb923c','#a3e635','#38bdf8','#e879f9','#fbbf24','#34d399','#60a5fa'];
 
@@ -395,14 +395,16 @@ const STEPS={1:['Importar Ficheiro','Passo 1 de 5'],2:['Seleccionar Alunos','Pas
 
 // ── NAV
 function navTo(n){
-  if(n>1&&!students.length){toast('Importa um ficheiro primeiro.','err');return}
-  if(n>2&&!selStudents().length){toast('Selecciona pelo menos um aluno.','err');return}
-  if(n>4&&!Object.keys(groups).length){toast('Cria os grupos primeiro.','err');return}
+  const movingForward=n>currentStep;
+  if(movingForward&&n>1&&!students.length){toast('Importa um ficheiro primeiro.','err');return}
+  if(movingForward&&n>2&&!selStudents().length){toast('Selecciona pelo menos um aluno.','err');return}
+  if(movingForward&&n>4&&!Object.keys(groups).length){toast('Cria os grupos primeiro.','err');return}
   document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('active',i+1===n));
   document.querySelectorAll('.nav-item[data-step]').forEach(el=>el.classList.toggle('active',+el.dataset.step===n));
   document.getElementById('ttitle').textContent=STEPS[n][0];
   document.getElementById('tsub').textContent=STEPS[n][1];
   document.getElementById('gprog').style.width=(n/5*100)+'%';
+  currentStep=n;
   updSidebar();
   if(n===2)renderTable();
   if(n===3)renderGnameInputs();
@@ -419,7 +421,7 @@ function updSidebar(){
   document.getElementById('nb4').textContent=Object.keys(groups).length?ass+'/'+sel.length:'—';
   document.getElementById('nb5').textContent=Object.keys(groups).length?'✓':'—';
   const sf=document.getElementById('sfoot');
-  sf.textContent=students.length?\`\${students.length} alunos importados\\n\${sel.length} seleccionados\\n\${Object.keys(groups).length} grupos criados\`:'Sem dados importados';
+  sf.textContent=students.length?\`\${students.length} alunos importados\n\${sel.length} seleccionados\n\${Object.keys(groups).length} grupos criados\`:'Sem dados importados';
 }
 
 // ── UPLOAD
@@ -429,7 +431,7 @@ dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
 dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');if(e.dataTransfer.files[0])parseFile(e.dataTransfer.files[0])});
 fi.addEventListener('change',e=>{if(e.target.files[0])parseFile(e.target.files[0])});
 
-function nh(t){return String(t||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').trim().toLowerCase()}
+function nh(t){return String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase()}
 
 function parseFile(file){
   const ext=file.name.split('.').pop().toLowerCase();
@@ -438,8 +440,8 @@ function parseFile(file){
     try{
       let rows;
       if(ext==='csv'){
-        const lines=e.target.result.split(/\\r?\\n/).filter(l=>l.trim());
-        const d=[',',';','\\t'].reduce((b,x)=>lines[0].split(x).length>lines[0].split(b).length?x:b,',');
+        const lines=e.target.result.split(/\r?\n/).filter(l=>l.trim());
+        const d=[',',';','\t'].reduce((b,x)=>lines[0].split(x).length>lines[0].split(b).length?x:b,',');
         rows=lines.map(l=>l.split(d).map(c=>c.trim()));
       } else {
         const wb=XLSX.read(e.target.result,{type:'array'});
@@ -472,10 +474,10 @@ function extractStudents(rows){
   if(nC===-1){
     const mc=Math.max(...dr.map(r=>r.length));
     let b=0,bs=-Infinity;
-    for(let c=0;c<mc;c++){let sc=0;dr.slice(0,50).forEach(r=>{const v=String(r[c]||'').trim();if(/[A-Za-zÀ-ÖØ-öø-ÿ]/.test(v))sc+=2;if(/^\\d+$/.test(v))sc-=2;if(v.includes(' '))sc++;});if(sc>bs){bs=sc;b=c;}}
+    for(let c=0;c<mc;c++){let sc=0;dr.slice(0,50).forEach(r=>{const v=String(r[c]||'').trim();if(/[A-Za-zÀ-ÖØ-öø-ÿ]/.test(v))sc+=2;if(/^\d+$/.test(v))sc-=2;if(v.includes(' '))sc++;});if(sc>bs){bs=sc;b=c;}}
     nC=b;
   }
-  if(uC===-1){const mc=Math.max(...dr.map(r=>r.length));for(let c=0;c<mc;c++){if(c===nC)continue;const ns=dr.filter(r=>/^\\d{4,8}$/.test(String(r[c]||'').trim()));if(ns.length>dr.length*.5){uC=c;break}}}
+  if(uC===-1){const mc=Math.max(...dr.map(r=>r.length));for(let c=0;c<mc;c++){if(c===nC)continue;const ns=dr.filter(r=>/^\d{4,8}$/.test(String(r[c]||'').trim()));if(ns.length>dr.length*.5){uC=c;break}}}
   const seen=new Set();
   students=dr.map((r,i)=>({
     num:uC>=0?String(r[uC]||'').trim():String(i+1),
@@ -483,7 +485,7 @@ function extractStudents(rows){
     email:eC>=0?String(r[eC]||'').trim():'',
     sel:true
   })).filter(s=>{
-    if(!s.name||/^\\d+$/.test(s.name))return false;
+    if(!s.name||/^\d+$/.test(s.name))return false;
     if(seen.has(s.name))return false;
     seen.add(s.name);return true;
   });
@@ -632,7 +634,7 @@ function openConfirm(){
   document.getElementById('mtitle').textContent='Finalizar grupos?';
   document.getElementById('mdesc').textContent=\`\${Object.keys(groups).length} grupos criados. Prosseguir para a exportação?\`;
   const w=document.getElementById('mwarn');
-  if(pool.length){w.classList.remove('hidden');w.textContent=\`⚠ \${pool.length} aluno(s) ficarão sem grupo.\`}else w.classList.add('hidden');
+  if(pool.length){w.classList.remove('hidden');w.textContent=\`Atenção: \${pool.length} aluno(s) ficarão sem grupo.\`}else w.classList.add('hidden');
   pendingFn=()=>navTo(5);
   document.getElementById('mbg').classList.add('open');
 }
@@ -669,7 +671,7 @@ function dlXls(email=false){
   Object.entries(groups).forEach(([,gr])=>{
     const d=[['Nº','Nome Completo','Email'],...gr.members.map(n=>{const s=getStu(n);return[s.num,s.name,s.email||'']})];
     const ws=XLSX.utils.aoa_to_sheet(d);ws['!cols']=[{wch:10},{wch:44},{wch:40}];
-    XLSX.utils.book_append_sheet(wb,ws,gr.name.replace(/[:\\\\\\/\\?\\*\\[\\]]/g,'').slice(0,31)||'Grupo');
+    XLSX.utils.book_append_sheet(wb,ws,gr.name.replace(/[:\\\/\?\*\[\]]/g,'').slice(0,31)||'Grupo');
   });
   XLSX.writeFile(wb,'grupos_turma.xlsx');
   toast('Excel exportado!','ok');
@@ -678,14 +680,14 @@ function dlXls(email=false){
     const tu=document.getElementById('expturma').value.trim();
     if(!em){toast('Introduz um email.','err');return}
     const sub=encodeURIComponent(\`Grupos\${tu?' — '+tu:''}\`);
-    const bod=encodeURIComponent(\`Olá,\\n\\nSegue em anexo o ficheiro com os grupos\${tu?' para '+tu:''}.\\n\\nTotal de grupos: \${Object.keys(groups).length}\\nTotal de alunos: \${Object.values(groups).reduce((a,g)=>a+g.members.length,0)}\\n\\nGerado pelo GroupForge\`);
+    const bod=encodeURIComponent(\`Olá,\n\nSegue em anexo o ficheiro com os grupos\${tu?' para '+tu:''}.\n\nTotal de grupos: \${Object.keys(groups).length}\nTotal de alunos: \${Object.values(groups).reduce((a,g)=>a+g.members.length,0)}\n\nGerado pelo GroupForge\`);
     window.location.href=\`mailto:\${em}?subject=\${sub}&body=\${bod}\`;
   }
 }
 
 // ── RESET
 function resetSession(){
-  students=[];groups={};pool=[];distMode='auto';cfgMethod='num-groups';gid=1;dragSrc=null;
+  students=[];groups={};pool=[];distMode='auto';cfgMethod='num-groups';gid=1;dragSrc=null;currentStep=1;
   document.getElementById('fi').value='';
   document.getElementById('cfgauto').classList.add('active');document.getElementById('cfgmanual').classList.remove('active');
   document.getElementById('mng').classList.add('active');document.getElementById('mpg').classList.remove('active');
@@ -695,7 +697,7 @@ function resetSession(){
 
 // ── TOASTS
 function toast(msg,type='info'){
-  const icons={ok:'✓',err:'✕',info:'ℹ'};
+  const icons={ok:'OK',err:'ERRO',info:'INFO'};
   const el=document.createElement('div');el.className=\`toast \${type}\`;
   el.innerHTML=\`<strong>\${icons[type]||'·'}</strong> \${msg}\`;
   document.getElementById('tz').appendChild(el);setTimeout(()=>el.remove(),3500);
