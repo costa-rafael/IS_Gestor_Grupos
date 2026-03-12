@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%230f766e%27/%3E%3Cpath d=%27M18 22h28v6H24v8h18v6H24v14h-6z%27 fill=%27white%27/%3E%3C/svg%3E"/>
 <title>GroupForge — Organizador de Grupos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
@@ -32,7 +33,7 @@ html,body{height:100%;background:radial-gradient(circle at top left,#ffffff 0,#e
 .logo-mark{display:flex;align-items:center;gap:10px;margin-bottom:4px}
 .logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--teal),#0ea5e9);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
 .logo-name{font-size:16px;font-weight:700;letter-spacing:-.3px}
-.logo-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-left:40px}
+.logo-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-left:0}
 .sidebar-nav{flex:1;padding:12px 10px;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
 .nav-sep{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);padding:10px 10px 6px}
 .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r);font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;border:1px solid transparent;user-select:none}
@@ -220,7 +221,6 @@ tbody tr.hid{display:none}
 <nav class="sidebar">
   <div class="sidebar-logo">
     <div class="logo-mark">
-      <div class="logo-icon">GF</div>
       <span class="logo-name">GroupForge</span>
     </div>
     <div class="logo-sub">Organizador de Turmas</div>
@@ -258,12 +258,13 @@ tbody tr.hid{display:none}
       <div class="ph"><div class="ph-title">Importar Lista de Alunos</div><div class="ph-desc">Carrega um ficheiro Excel ou CSV. A aplicação detecta automaticamente as colunas de número, nome e email.</div></div>
       <div class="dz" id="dz">
         <input type="file" id="fi" accept=".xlsx,.xls,.csv"/>
-        <span class="dz-icon"></span>
+        <span class="dz-icon">UPLOAD</span>
         <div class="dz-title">Arrasta o ficheiro ou clica para seleccionar</div>
         <div class="dz-sub">Detecção automática de colunas — Número, Nome, Email...</div>
         <div class="dz-fmts"><span class="fmt">.xlsx</span><span class="fmt">.xls</span><span class="fmt">.csv</span></div>
       </div>
       <div class="info-box"><span>i</span><span>Os dados são processados localmente no teu browser. Nenhuma informação é enviada para servidores externos.</span></div>
+      <div class="btn-row"><button class="btn btn-primary" id="btn1next" onclick="navTo(2)" disabled>Continuar</button></div>
     </div>
 
     <!-- P2: SELECCIONAR -->
@@ -491,6 +492,7 @@ function extractStudents(rows){
   });
   if(!students.length){toast('Nenhum nome encontrado.','err');return}
   toast(`${students.length} alunos importados!`,'ok');
+  const b1=document.getElementById('btn1next');if(b1)b1.disabled=false;
   updSidebar();navTo(2);
 }
 
@@ -692,6 +694,7 @@ function resetSession(){
   document.getElementById('cfgauto').classList.add('active');document.getElementById('cfgmanual').classList.remove('active');
   document.getElementById('mng').classList.add('active');document.getElementById('mpg').classList.remove('active');
   document.getElementById('cfgv').value=4;
+  const b1=document.getElementById('btn1next');if(b1)b1.disabled=true;
   navTo(1);updSidebar();
 }
 
