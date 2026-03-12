@@ -10,8 +10,12 @@ const APP_HTML = `<!DOCTYPE html>
 <script>
 const XLSX_CDNS=[
   'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+<<<<<<< codex/refactor-ui-for-clean-design-73ubg7
   'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
+=======
+  'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'
+>>>>>>> main
 ];
 function ensureXlsxLoaded(){
   if(window.XLSX)return Promise.resolve(window.XLSX);
@@ -19,7 +23,11 @@ function ensureXlsxLoaded(){
   window.__xlsxLoading=new Promise((resolve,reject)=>{
     let i=0;
     const loadNext=()=>{
+<<<<<<< codex/refactor-ui-for-clean-design-73ubg7
       if(i>=XLSX_CDNS.length){window.__xlsxLoading=null;reject(new Error('Não foi possível carregar o motor de leitura Excel. Tenta novamente ou exporta para CSV.'));return;}
+=======
+      if(i>=XLSX_CDNS.length){reject(new Error('Não foi possível carregar o motor de leitura Excel.'));return;}
+>>>>>>> main
       const sc=document.createElement('script');
       sc.src=XLSX_CDNS[i++];
       sc.async=true;
@@ -487,7 +495,11 @@ function pickBestSheetRows(wb){
 
 function parseFile(file){
   const ext=(file.name.split('.').pop()||'').toLowerCase();
+<<<<<<< codex/refactor-ui-for-clean-design-73ubg7
   const isCsv=ext==='csv'||String(file.type||'').includes('csv');
+=======
+  const isCsv=ext==='csv';
+>>>>>>> main
   const parse=()=>{
     const r=new FileReader();
     r.onload=e=>{
@@ -505,7 +517,10 @@ function parseFile(file){
   };
 
   if(isCsv){parse();return;}
+<<<<<<< codex/refactor-ui-for-clean-design-73ubg7
   toast('A preparar leitura de Excel...','info');
+=======
+>>>>>>> main
   ensureXlsxLoaded().then(parse).catch(err=>toast(err.message,'err'));
 }
 
