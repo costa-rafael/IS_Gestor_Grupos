@@ -7,7 +7,30 @@ const APP_HTML = `<!DOCTYPE html>
 <title>GroupForge — Organizador de Grupos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+const XLSX_CDNS=[
+  'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+  'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'
+];
+function ensureXlsxLoaded(){
+  if(window.XLSX)return Promise.resolve(window.XLSX);
+  if(window.__xlsxLoading)return window.__xlsxLoading;
+  window.__xlsxLoading=new Promise((resolve,reject)=>{
+    let i=0;
+    const loadNext=()=>{
+      if(i>=XLSX_CDNS.length){reject(new Error('Não foi possível carregar o motor de leitura Excel.'));return;}
+      const sc=document.createElement('script');
+      sc.src=XLSX_CDNS[i++];
+      sc.async=true;
+      sc.onload=()=>window.XLSX?resolve(window.XLSX):loadNext();
+      sc.onerror=loadNext;
+      document.head.appendChild(sc);
+    };
+    loadNext();
+  });
+  return window.__xlsxLoading;
+}
+</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -463,19 +486,25 @@ function pickBestSheetRows(wb){
 
 function parseFile(file){
   const ext=(file.name.split('.').pop()||'').toLowerCase();
-  const r=new FileReader();
-  r.onload=e=>{
-    try{
-      let rows=[];
-      if(ext==='csv')rows=csvToRows(e.target.result);
-      else {
-        const wb=XLSX.read(e.target.result,{type:'array'});
-        rows=pickBestSheetRows(wb);
-      }
-      extractStudents(rows);
-    }catch(err){toast('Erro ao ler ficheiro: '+err.message,'err')}
+  const isCsv=ext==='csv';
+  const parse=()=>{
+    const r=new FileReader();
+    r.onload=e=>{
+      try{
+        let rows=[];
+        if(isCsv)rows=csvToRows(e.target.result);
+        else {
+          const wb=XLSX.read(e.target.result,{type:'array'});
+          rows=pickBestSheetRows(wb);
+        }
+        extractStudents(rows);
+      }catch(err){toast('Erro ao ler ficheiro: '+err.message,'err')}
+    };
+    if(isCsv)r.readAsText(file);else r.readAsArrayBuffer(file);
   };
-  if(ext==='csv')r.readAsText(file);else r.readAsArrayBuffer(file);
+
+  if(isCsv){parse();return;}
+  ensureXlsxLoaded().then(parse).catch(err=>toast(err.message,'err'));
 }
 
 function extractStudents(rows){
