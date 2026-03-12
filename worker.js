@@ -21,10 +21,21 @@ function ensureXlsxLoaded(){
     const loadNext=()=>{
       if(i>=XLSX_CDNS.length){window.__xlsxLoading=null;reject(new Error('Não foi possível carregar o motor de leitura Excel. Tenta novamente ou exporta para CSV.'));return;}
       const sc=document.createElement('script');
-      sc.src=XLSX_CDNS[i++];
+      const src=XLSX_CDNS[i++];
+      let settled=false;
+      const finish=(ok)=>{
+        if(settled)return;
+        settled=true;
+        clearTimeout(timer);
+        if(ok&&window.XLSX){resolve(window.XLSX);return;}
+        sc.remove();
+        loadNext();
+      };
+      const timer=setTimeout(()=>finish(false),8000);
+      sc.src=src;
       sc.async=true;
-      sc.onload=()=>window.XLSX?resolve(window.XLSX):loadNext();
-      sc.onerror=loadNext;
+      sc.onload=()=>finish(true);
+      sc.onerror=()=>finish(false);
       document.head.appendChild(sc);
     };
     loadNext();
@@ -97,6 +108,10 @@ html,body{height:100%;background:radial-gradient(circle at top left,#ffffff 0,#e
 .dz-fmts{display:inline-flex;gap:6px;margin-top:12px}
 .fmt{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 8px;border:1px solid var(--border2);border-radius:4px;color:var(--text3)}
 .info-box{display:flex;gap:10px;padding:13px 16px;background:var(--teal-dim);border:1px solid rgba(45,212,191,.2);border-radius:var(--r);font-size:13px;color:var(--text2);margin-top:18px}
+.upload-status{margin-top:12px;font-size:12px;color:var(--text2);min-height:18px}
+.upload-status.busy{color:var(--teal);font-weight:600}
+.upload-status.err{color:var(--red);font-weight:600}
+.upload-status.ok{color:var(--green);font-weight:600}
 
 /* ALUNO TABLE */
 .atoolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
@@ -286,6 +301,7 @@ tbody tr.hid{display:none}
         <div class="dz-sub">Detecção automática de colunas — Número, Nome, Email...</div>
         <div class="dz-fmts"><span class="fmt">.xlsx</span><span class="fmt">.xls</span><span class="fmt">.csv</span></div>
       </div>
+      <div class="upload-status" id="uploadStatus" aria-live="polite"></div>
       <div class="info-box"><span>i</span><span>Os dados são processados localmente no teu browser. Nenhuma informação é enviada para servidores externos.</span></div>
       <div class="btn-row"><button class="btn btn-primary" id="btn1next" onclick="navTo(2)" disabled>Continuar</button></div>
     </div>
@@ -411,7 +427,7 @@ tbody tr.hid{display:none}
 
 <script>
 // ── STATE
-let students=[], groups={}, pool=[], distMode='auto', cfgMethod='num-groups', gid=1, dragSrc=null, pendingFn=null, currentStep=1;
+let students=[], groups={}, pool=[], distMode='auto', cfgMethod='num-groups', gid=1, dragSrc=null, pendingFn=null, currentStep=1, fileLabel='';
 
 const COLORS=['#2dd4bf','#818cf8','#f472b6','#fb923c','#a3e635','#38bdf8','#e879f9','#fbbf24','#34d399','#60a5fa'];
 
@@ -485,10 +501,19 @@ function pickBestSheetRows(wb){
   return bestRows;
 }
 
+function setUploadStatus(msg,type=''){
+  const el=document.getElementById('uploadStatus');
+  if(!el)return;
+  el.textContent=msg||'';
+  el.className='upload-status'+(type?' '+type:'');
+}
+
 function parseFile(file){
+  fileLabel=file.name||'ficheiro';
   const ext=(file.name.split('.').pop()||'').toLowerCase();
   const isCsv=ext==='csv'||String(file.type||'').includes('csv');
   const parse=()=>{
+    setUploadStatus('A processar '+file.name+'...','busy');
     const r=new FileReader();
     r.onload=e=>{
       try{
@@ -499,18 +524,20 @@ function parseFile(file){
           rows=pickBestSheetRows(wb);
         }
         extractStudents(rows);
-      }catch(err){toast('Erro ao ler ficheiro: '+err.message,'err')}
+      }catch(err){setUploadStatus('Erro ao ler '+file.name+': '+err.message,'err');toast('Erro ao ler ficheiro: '+err.message,'err')}
     };
+    r.onerror=()=>{setUploadStatus('Erro ao abrir '+file.name+'.','err');toast('Erro ao abrir ficheiro.','err')};
     if(isCsv)r.readAsText(file);else r.readAsArrayBuffer(file);
   };
 
   if(isCsv){parse();return;}
+  setUploadStatus('A carregar motor de leitura Excel...','busy');
   toast('A preparar leitura de Excel...','info');
-  ensureXlsxLoaded().then(parse).catch(err=>toast(err.message,'err'));
+  ensureXlsxLoaded().then(parse).catch(err=>{setUploadStatus(err.message,'err');toast(err.message,'err')});
 }
 
 function extractStudents(rows){
-  if(!rows||!rows.length){toast('Ficheiro vazio.','err');return}
+  if(!rows||!rows.length){setUploadStatus('Ficheiro vazio.','err');toast('Ficheiro vazio.','err');return}
   const NA=['nome','nomes','name','aluno','alunos','student'],
         NU=['numero','numeros','num','number','id','nº','no','codigo','codigos'],
         EA=['email','mail','e-mail','correio'];
@@ -530,7 +557,7 @@ function extractStudents(rows){
 
   const ds=hRow>=0?hRow+1:0;
   const dr=rows.slice(ds).filter(r=>r&&r.some(c=>String(c||'').trim()));
-  if(!dr.length){toast('Ficheiro sem linhas de alunos.','err');return}
+  if(!dr.length){setUploadStatus('Ficheiro sem linhas de alunos.','err');toast('Ficheiro sem linhas de alunos.','err');return}
   const mc=Math.max(...dr.map(r=>r.length),0);
 
   function scoreCol(c,type){
@@ -582,7 +609,8 @@ function extractStudents(rows){
     seen.add(k);return true;
   });
 
-  if(!students.length){toast('Nenhum nome encontrado. Verifica o cabeçalho da coluna de nomes.','err');return}
+  if(!students.length){setUploadStatus('Nenhum nome encontrado. Verifica o cabeçalho da coluna de nomes.','err');toast('Nenhum nome encontrado. Verifica o cabeçalho da coluna de nomes.','err');return}
+  setUploadStatus(\`\${students.length} alunos importados de \${fileLabel}.\`,'ok');
   toast(\`\${students.length} alunos importados!\`,'ok');
   const b1=document.getElementById('btn1next');if(b1)b1.disabled=false;
   updSidebar();navTo(2);
