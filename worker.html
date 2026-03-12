@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+const APP_HTML = `<!DOCTYPE html>
 <html lang="pt">
 <head>
 <meta charset="UTF-8"/>
@@ -21,10 +21,21 @@ function ensureXlsxLoaded(){
     const loadNext=()=>{
       if(i>=XLSX_CDNS.length){window.__xlsxLoading=null;reject(new Error('Não foi possível carregar o motor de leitura Excel. Tenta novamente ou exporta para CSV.'));return;}
       const sc=document.createElement('script');
-      sc.src=XLSX_CDNS[i++];
+      const src=XLSX_CDNS[i++];
+      let settled=false;
+      const finish=(ok)=>{
+        if(settled)return;
+        settled=true;
+        clearTimeout(timer);
+        if(ok&&window.XLSX){resolve(window.XLSX);return;}
+        sc.remove();
+        loadNext();
+      };
+      const timer=setTimeout(()=>finish(false),8000);
+      sc.src=src;
       sc.async=true;
-      sc.onload=()=>window.XLSX?resolve(window.XLSX):loadNext();
-      sc.onerror=loadNext;
+      sc.onload=()=>finish(true);
+      sc.onerror=()=>finish(false);
       document.head.appendChild(sc);
     };
     loadNext();
@@ -97,6 +108,10 @@ html,body{height:100%;background:radial-gradient(circle at top left,#ffffff 0,#e
 .dz-fmts{display:inline-flex;gap:6px;margin-top:12px}
 .fmt{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 8px;border:1px solid var(--border2);border-radius:4px;color:var(--text3)}
 .info-box{display:flex;gap:10px;padding:13px 16px;background:var(--teal-dim);border:1px solid rgba(45,212,191,.2);border-radius:var(--r);font-size:13px;color:var(--text2);margin-top:18px}
+.upload-status{margin-top:12px;font-size:12px;color:var(--text2);min-height:18px}
+.upload-status.busy{color:var(--teal);font-weight:600}
+.upload-status.err{color:var(--red);font-weight:600}
+.upload-status.ok{color:var(--green);font-weight:600}
 
 /* ALUNO TABLE */
 .atoolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
@@ -286,6 +301,7 @@ tbody tr.hid{display:none}
         <div class="dz-sub">Detecção automática de colunas — Número, Nome, Email...</div>
         <div class="dz-fmts"><span class="fmt">.xlsx</span><span class="fmt">.xls</span><span class="fmt">.csv</span></div>
       </div>
+      <div class="upload-status" id="uploadStatus" aria-live="polite"></div>
       <div class="info-box"><span>i</span><span>Os dados são processados localmente no teu browser. Nenhuma informação é enviada para servidores externos.</span></div>
       <div class="btn-row"><button class="btn btn-primary" id="btn1next" onclick="navTo(2)" disabled>Continuar</button></div>
     </div>
@@ -411,7 +427,7 @@ tbody tr.hid{display:none}
 
 <script>
 // ── STATE
-let students=[], groups={}, pool=[], distMode='auto', cfgMethod='num-groups', gid=1, dragSrc=null, pendingFn=null, currentStep=1;
+let students=[], groups={}, pool=[], distMode='auto', cfgMethod='num-groups', gid=1, dragSrc=null, pendingFn=null, currentStep=1, fileLabel='';
 
 const COLORS=['#2dd4bf','#818cf8','#f472b6','#fb923c','#a3e635','#38bdf8','#e879f9','#fbbf24','#34d399','#60a5fa'];
 
@@ -445,7 +461,7 @@ function updSidebar(){
   document.getElementById('nb4').textContent=Object.keys(groups).length?ass+'/'+sel.length:'—';
   document.getElementById('nb5').textContent=Object.keys(groups).length?'✓':'—';
   const sf=document.getElementById('sfoot');
-  sf.textContent=students.length?`${students.length} alunos importados\n${sel.length} seleccionados\n${Object.keys(groups).length} grupos criados`:'Sem dados importados';
+  sf.textContent=students.length?\`\${students.length} alunos importados\n\${sel.length} seleccionados\n\${Object.keys(groups).length} grupos criados\`:'Sem dados importados';
 }
 
 // ── UPLOAD
@@ -485,10 +501,19 @@ function pickBestSheetRows(wb){
   return bestRows;
 }
 
+function setUploadStatus(msg,type=''){
+  const el=document.getElementById('uploadStatus');
+  if(!el)return;
+  el.textContent=msg||'';
+  el.className='upload-status'+(type?' '+type:'');
+}
+
 function parseFile(file){
+  fileLabel=file.name||'ficheiro';
   const ext=(file.name.split('.').pop()||'').toLowerCase();
   const isCsv=ext==='csv'||String(file.type||'').includes('csv');
   const parse=()=>{
+    setUploadStatus('A processar '+file.name+'...','busy');
     const r=new FileReader();
     r.onload=e=>{
       try{
@@ -499,18 +524,20 @@ function parseFile(file){
           rows=pickBestSheetRows(wb);
         }
         extractStudents(rows);
-      }catch(err){toast('Erro ao ler ficheiro: '+err.message,'err')}
+      }catch(err){setUploadStatus('Erro ao ler '+file.name+': '+err.message,'err');toast('Erro ao ler ficheiro: '+err.message,'err')}
     };
+    r.onerror=()=>{setUploadStatus('Erro ao abrir '+file.name+'.','err');toast('Erro ao abrir ficheiro.','err')};
     if(isCsv)r.readAsText(file);else r.readAsArrayBuffer(file);
   };
 
   if(isCsv){parse();return;}
+  setUploadStatus('A carregar motor de leitura Excel...','busy');
   toast('A preparar leitura de Excel...','info');
-  ensureXlsxLoaded().then(parse).catch(err=>toast(err.message,'err'));
+  ensureXlsxLoaded().then(parse).catch(err=>{setUploadStatus(err.message,'err');toast(err.message,'err')});
 }
 
 function extractStudents(rows){
-  if(!rows||!rows.length){toast('Ficheiro vazio.','err');return}
+  if(!rows||!rows.length){setUploadStatus('Ficheiro vazio.','err');toast('Ficheiro vazio.','err');return}
   const NA=['nome','nomes','name','aluno','alunos','student'],
         NU=['numero','numeros','num','number','id','nº','no','codigo','codigos'],
         EA=['email','mail','e-mail','correio'];
@@ -530,7 +557,7 @@ function extractStudents(rows){
 
   const ds=hRow>=0?hRow+1:0;
   const dr=rows.slice(ds).filter(r=>r&&r.some(c=>String(c||'').trim()));
-  if(!dr.length){toast('Ficheiro sem linhas de alunos.','err');return}
+  if(!dr.length){setUploadStatus('Ficheiro sem linhas de alunos.','err');toast('Ficheiro sem linhas de alunos.','err');return}
   const mc=Math.max(...dr.map(r=>r.length),0);
 
   function scoreCol(c,type){
@@ -577,13 +604,14 @@ function extractStudents(rows){
     sel:true
   })).filter(s=>{
     if(!s.name||/^\d+$/.test(s.name))return false;
-    const k=`${s.num}::${s.name}`;
+    const k=\`\${s.num}::\${s.name}\`;
     if(seen.has(k))return false;
     seen.add(k);return true;
   });
 
-  if(!students.length){toast('Nenhum nome encontrado. Verifica o cabeçalho da coluna de nomes.','err');return}
-  toast(`${students.length} alunos importados!`,'ok');
+  if(!students.length){setUploadStatus('Nenhum nome encontrado. Verifica o cabeçalho da coluna de nomes.','err');toast('Nenhum nome encontrado. Verifica o cabeçalho da coluna de nomes.','err');return}
+  setUploadStatus(\`\${students.length} alunos importados de \${fileLabel}.\`,'ok');
+  toast(\`\${students.length} alunos importados!\`,'ok');
   const b1=document.getElementById('btn1next');if(b1)b1.disabled=false;
   updSidebar();navTo(2);
 }
@@ -591,16 +619,16 @@ function extractStudents(rows){
 // ── SELECT
 function selStudents(){return students.filter(s=>s.sel)}
 function renderTable(){
-  document.getElementById('tbody').innerHTML=students.map((s,i)=>`
-    <tr class="${s.sel?'sel':''}" data-i="${i}" onclick="togS(${i})">
+  document.getElementById('tbody').innerHTML=students.map((s,i)=>\`
+    <tr class="\${s.sel?'sel':''}" data-i="\${i}" onclick="togS(\${i})">
       <td style="text-align:center"><div class="cbc">✓</div></td>
-      <td><span class="mono">${s.num||'—'}</span></td>
-      <td><strong>${s.name}</strong></td>
-      <td><span class="mono">${s.email||'—'}</span></td>
-    </tr>`).join('');
+      <td><span class="mono">\${s.num||'—'}</span></td>
+      <td><strong>\${s.name}</strong></td>
+      <td><span class="mono">\${s.email||'—'}</span></td>
+    </tr>\`).join('');
   updSelCt();
 }
-function togS(i){students[i].sel=!students[i].sel;const r=document.querySelector(`#tbody tr[data-i="${i}"]`);if(r)r.classList.toggle('sel',students[i].sel);updSelCt()}
+function togS(i){students[i].sel=!students[i].sel;const r=document.querySelector(\`#tbody tr[data-i="\${i}"]\`);if(r)r.classList.toggle('sel',students[i].sel);updSelCt()}
 function selAll(v){document.querySelectorAll('#tbody tr:not(.hid)').forEach(r=>{const i=+r.dataset.i;if(!isNaN(i)){students[i].sel=v;r.classList.toggle('sel',v)}});updSelCt()}
 function toggleMaster(){const a=students.some(s=>!s.sel);selAll(a)}
 function filterT(){
@@ -622,14 +650,14 @@ function numGroups(){const v=+document.getElementById('cfgv').value||4;const n=s
 function updPrev(){
   const v=+document.getElementById('cfgv').value||0;const n=selStudents().length;if(!v||!n)return;
   let g,pp,rem;if(cfgMethod==='num-groups'){g=v;pp=Math.floor(n/v);rem=n%v}else{g=Math.ceil(n/v);pp=v;rem=n%v}
-  document.getElementById('prevpill').textContent=`→ ${g} grupo(s) · ~${pp} alunos${rem?` (${rem} com ${pp+1})`:''}`;
+  document.getElementById('prevpill').textContent=\`→ \${g} grupo(s) · ~\${pp} alunos\${rem?\` (\${rem} com \${pp+1})\`:''}\`;
 }
 function renderGnameInputs(){
   const n=numGroups();const c=document.getElementById('gnameinputs');
   const ex={};c.querySelectorAll('input').forEach((el,i)=>{if(el.value)ex[i]=el.value});
-  c.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px">
-    ${Array.from({length:n},(_,i)=>`<div><div class="fl" style="margin-bottom:5px">Grupo ${i+1}</div><input class="fi" id="gn${i}" placeholder="Grupo ${i+1}" value="${ex[i]||''}"/></div>`).join('')}
-  </div>`;
+  c.innerHTML=\`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px">
+    \${Array.from({length:n},(_,i)=>\`<div><div class="fl" style="margin-bottom:5px">Grupo \${i+1}</div><input class="fi" id="gn\${i}" placeholder="Grupo \${i+1}" value="\${ex[i]||''}"/></div>\`).join('')}
+  </div>\`;
   updPrev();
 }
 
@@ -638,7 +666,7 @@ function generate(){
   const sel=selStudents();const ng=numGroups();gid=1;groups={};
   for(let i=0;i<ng;i++){
     const id='G'+(gid++);const ne=document.getElementById('gn'+i);
-    groups[id]={name:ne?.value.trim()||`Grupo ${i+1}`,color:COLORS[i%COLORS.length],members:[]};
+    groups[id]={name:ne?.value.trim()||\`Grupo \${i+1}\`,color:COLORS[i%COLORS.length],members:[]};
   }
   if(distMode==='auto'){
     const sh=[...sel].sort(()=>Math.random()-.5);const ks=Object.keys(groups);
@@ -654,7 +682,7 @@ function renderOrg(){renderPool();renderGcards();renderOstats()}
 function renderPool(){
   const l=document.getElementById('poollist');
   l.innerHTML=pool.length
-    ?pool.map(n=>{const s=getStu(n);return`<div class="pchip" draggable="true" data-num="${n}" data-src="pool"><span class="dico">⠿</span><span class="cn">${s.num}</span><span class="cname">${s.name}</span></div>`}).join('')
+    ?pool.map(n=>{const s=getStu(n);return\`<div class="pchip" draggable="true" data-num="\${n}" data-src="pool"><span class="dico">⠿</span><span class="cn">\${s.num}</span><span class="cname">\${s.name}</span></div>\`}).join('')
     :'<div class="pool-empty">✓ Todos os alunos foram atribuídos</div>';
   document.getElementById('poolct').textContent=pool.length;
   document.querySelectorAll('.pchip[draggable]').forEach(el=>{
@@ -665,18 +693,18 @@ function renderPool(){
 
 function renderGcards(){
   const g=document.getElementById('gsgrid');
-  g.innerHTML=Object.entries(groups).map(([id,gr])=>`
-    <div class="gcard" id="gc${id}" ondragover="gOver(event,'${id}')" ondragleave="gLeave('${id}')" ondrop="gDrop(event,'${id}')">
+  g.innerHTML=Object.entries(groups).map(([id,gr])=>\`
+    <div class="gcard" id="gc\${id}" ondragover="gOver(event,'\${id}')" ondragleave="gLeave('\${id}')" ondrop="gDrop(event,'\${id}')">
       <div class="ghead">
-        <div class="gdot" style="background:${gr.color}"></div>
-        <input class="gname" value="${gr.name}" placeholder="Nome" onchange="groups['${id}'].name=this.value"/>
-        <span class="gbadge">${gr.members.length}</span>
-        <button class="gdel" onclick="delGrp('${id}')">✕</button>
+        <div class="gdot" style="background:\${gr.color}"></div>
+        <input class="gname" value="\${gr.name}" placeholder="Nome" onchange="groups['\${id}'].name=this.value"/>
+        <span class="gbadge">\${gr.members.length}</span>
+        <button class="gdel" onclick="delGrp('\${id}')">✕</button>
       </div>
-      <div class="gbody" id="gb${id}">
-        ${gr.members.length?gr.members.map(n=>{const s=getStu(n);return`<div class="gchip" draggable="true" data-num="${n}" data-src="${id}"><span class="cn">${s.num}</span><span class="cname">${s.name}</span><button class="rmbtn" onclick="rmFromG('${id}','${n}',event)">×</button></div>`}).join(''):'<div class="gdrophint">Arrasta alunos aqui</div>'}
+      <div class="gbody" id="gb\${id}">
+        \${gr.members.length?gr.members.map(n=>{const s=getStu(n);return\`<div class="gchip" draggable="true" data-num="\${n}" data-src="\${id}"><span class="cn">\${s.num}</span><span class="cname">\${s.name}</span><button class="rmbtn" onclick="rmFromG('\${id}','\${n}',event)">×</button></div>\`}).join(''):'<div class="gdrophint">Arrasta alunos aqui</div>'}
       </div>
-    </div>`).join('');
+    </div>\`).join('');
   document.querySelectorAll('.gchip[draggable]').forEach(el=>{
     el.addEventListener('dragstart',e=>{dragSrc={num:el.dataset.num,src:el.dataset.src};setTimeout(()=>el.classList.add('dragging'),0);e.dataTransfer.effectAllowed='move'});
     el.addEventListener('dragend',()=>el.classList.remove('dragging'));
@@ -702,7 +730,7 @@ function dropPool(e){
   dragSrc=null;renderOrg();
 }
 function rmFromG(id,num,e){e.stopPropagation();groups[id].members=groups[id].members.filter(n=>n!==num);if(!pool.includes(num))pool.push(num);renderOrg()}
-function addGrp(){const id='G'+(gid++);groups[id]={name:`Grupo ${Object.keys(groups).length+1}`,color:COLORS[Object.keys(groups).length%COLORS.length],members:[]};renderOrg();toast('Novo grupo adicionado.','info')}
+function addGrp(){const id='G'+(gid++);groups[id]={name:\`Grupo \${Object.keys(groups).length+1}\`,color:COLORS[Object.keys(groups).length%COLORS.length],members:[]};renderOrg();toast('Novo grupo adicionado.','info')}
 function delGrp(id){groups[id].members.forEach(n=>{if(!pool.includes(n))pool.push(n)});delete groups[id];renderOrg();toast('Grupo removido. Alunos devolvidos à banca.','info')}
 function shuffle(){
   const all=[...Object.values(groups).flatMap(g=>g.members),...pool].sort(()=>Math.random()-.5);
@@ -713,22 +741,22 @@ function shuffle(){
 function renderOstats(){
   const ass=Object.values(groups).reduce((a,g)=>a+g.members.length,0);
   const tot=selStudents().length;const pct=tot?Math.round(ass/tot*100):0;
-  document.getElementById('ostats').innerHTML=`
-    <div class="scard"><div class="slbl">Total</div><div class="sval">${tot}</div></div>
-    <div class="scard"><div class="slbl">Grupos</div><div class="sval tc">${Object.keys(groups).length}</div></div>
-    <div class="scard"><div class="slbl">Atribuídos</div><div class="sval">${ass}</div></div>
-    <div class="scard"><div class="slbl">Na Banca</div><div class="sval ${pool.length?'am':''}">${pool.length}</div></div>`;
+  document.getElementById('ostats').innerHTML=\`
+    <div class="scard"><div class="slbl">Total</div><div class="sval">\${tot}</div></div>
+    <div class="scard"><div class="slbl">Grupos</div><div class="sval tc">\${Object.keys(groups).length}</div></div>
+    <div class="scard"><div class="slbl">Atribuídos</div><div class="sval">\${ass}</div></div>
+    <div class="scard"><div class="slbl">Na Banca</div><div class="sval \${pool.length?'am':''}">\${pool.length}</div></div>\`;
   document.getElementById('progfill').style.width=pct+'%';
-  document.getElementById('progtxt').textContent=`${ass} / ${tot}`;
+  document.getElementById('progtxt').textContent=\`\${ass} / \${tot}\`;
   updSidebar();
 }
 
 // ── CONFIRM
 function openConfirm(){
   document.getElementById('mtitle').textContent='Finalizar grupos?';
-  document.getElementById('mdesc').textContent=`${Object.keys(groups).length} grupos criados. Prosseguir para a exportação?`;
+  document.getElementById('mdesc').textContent=\`\${Object.keys(groups).length} grupos criados. Prosseguir para a exportação?\`;
   const w=document.getElementById('mwarn');
-  if(pool.length){w.classList.remove('hidden');w.textContent=`Atenção: ${pool.length} aluno(s) ficarão sem grupo.`}else w.classList.add('hidden');
+  if(pool.length){w.classList.remove('hidden');w.textContent=\`Atenção: \${pool.length} aluno(s) ficarão sem grupo.\`}else w.classList.add('hidden');
   pendingFn=()=>navTo(5);
   document.getElementById('mbg').classList.add('open');
 }
@@ -738,21 +766,21 @@ function doConfirm(){closeMod();if(pendingFn)pendingFn()}
 // ── EXPORT
 function renderExport(){
   const ass=Object.values(groups).reduce((a,g)=>a+g.members.length,0);
-  document.getElementById('estats').innerHTML=`
-    <div class="scard"><div class="slbl">Grupos</div><div class="sval tc">${Object.keys(groups).length}</div></div>
-    <div class="scard"><div class="slbl">Alunos</div><div class="sval">${ass}</div></div>
-    <div class="scard"><div class="slbl">Sem Grupo</div><div class="sval ${pool.length?'rd':''}">${pool.length}</div></div>`;
+  document.getElementById('estats').innerHTML=\`
+    <div class="scard"><div class="slbl">Grupos</div><div class="sval tc">\${Object.keys(groups).length}</div></div>
+    <div class="scard"><div class="slbl">Alunos</div><div class="sval">\${ass}</div></div>
+    <div class="scard"><div class="slbl">Sem Grupo</div><div class="sval \${pool.length?'rd':''}">\${pool.length}</div></div>\`;
   const el=document.getElementById('expsummary');
-  el.innerHTML=Object.entries(groups).map(([,gr])=>`
+  el.innerHTML=Object.entries(groups).map(([,gr])=>\`
     <div class="exp-gsec">
-      <div class="exp-ghead"><div class="exp-gdot" style="background:${gr.color}"></div><span class="exp-gname">${gr.name}</span><span class="exp-gcnt">${gr.members.length} aluno(s)</span></div>
-      <div class="exp-members">${gr.members.map(n=>`<span class="exp-tag">${getStu(n).name}</span>`).join('')||'<span style="font-size:12px;color:var(--text3)">Vazio</span>'}</div>
-    </div>`)
-  .join('')+(pool.length?`
+      <div class="exp-ghead"><div class="exp-gdot" style="background:\${gr.color}"></div><span class="exp-gname">\${gr.name}</span><span class="exp-gcnt">\${gr.members.length} aluno(s)</span></div>
+      <div class="exp-members">\${gr.members.map(n=>\`<span class="exp-tag">\${getStu(n).name}</span>\`).join('')||'<span style="font-size:12px;color:var(--text3)">Vazio</span>'}</div>
+    </div>\`)
+  .join('')+(pool.length?\`
     <div class="exp-gsec">
-      <div class="exp-ghead" style="background:var(--red-dim)"><div class="exp-gdot" style="background:var(--red)"></div><span class="exp-gname" style="color:var(--red)">Sem grupo</span><span class="exp-gcnt">${pool.length} aluno(s)</span></div>
-      <div class="exp-members">${pool.map(n=>`<span class="exp-tag" style="border-color:rgba(239,68,68,.3)">${getStu(n).name}</span>`).join('')}</div>
-    </div>`:'');
+      <div class="exp-ghead" style="background:var(--red-dim)"><div class="exp-gdot" style="background:var(--red)"></div><span class="exp-gname" style="color:var(--red)">Sem grupo</span><span class="exp-gcnt">\${pool.length} aluno(s)</span></div>
+      <div class="exp-members">\${pool.map(n=>\`<span class="exp-tag" style="border-color:rgba(239,68,68,.3)">\${getStu(n).name}</span>\`).join('')}</div>
+    </div>\`:'');
 }
 
 function dlXls(email=false){
@@ -773,9 +801,9 @@ function dlXls(email=false){
     const em=document.getElementById('expemail').value.trim();
     const tu=document.getElementById('expturma').value.trim();
     if(!em){toast('Introduz um email.','err');return}
-    const sub=encodeURIComponent(`Grupos${tu?' — '+tu:''}`);
-    const bod=encodeURIComponent(`Olá,\n\nSegue em anexo o ficheiro com os grupos${tu?' para '+tu:''}.\n\nTotal de grupos: ${Object.keys(groups).length}\nTotal de alunos: ${Object.values(groups).reduce((a,g)=>a+g.members.length,0)}\n\nGerado pelo GroupForge`);
-    window.location.href=`mailto:${em}?subject=${sub}&body=${bod}`;
+    const sub=encodeURIComponent(\`Grupos\${tu?' — '+tu:''}\`);
+    const bod=encodeURIComponent(\`Olá,\n\nSegue em anexo o ficheiro com os grupos\${tu?' para '+tu:''}.\n\nTotal de grupos: \${Object.keys(groups).length}\nTotal de alunos: \${Object.values(groups).reduce((a,g)=>a+g.members.length,0)}\n\nGerado pelo GroupForge\`);
+    window.location.href=\`mailto:\${em}?subject=\${sub}&body=\${bod}\`;
   }
 }
 
@@ -793,8 +821,8 @@ function resetSession(){
 // ── TOASTS
 function toast(msg,type='info'){
   const icons={ok:'OK',err:'ERRO',info:'INFO'};
-  const el=document.createElement('div');el.className=`toast ${type}`;
-  el.innerHTML=`<strong>${icons[type]||'·'}</strong> ${msg}`;
+  const el=document.createElement('div');el.className=\`toast \${type}\`;
+  el.innerHTML=\`<strong>\${icons[type]||'·'}</strong> \${msg}\`;
   document.getElementById('tz').appendChild(el);setTimeout(()=>el.remove(),3500);
 }
 
@@ -803,4 +831,54 @@ ensureXlsxLoaded().catch(()=>{});
 updPrev();renderGnameInputs();
 </script>
 </body>
-</html>
+</html>`;
+
+const SECURITY_HEADERS = {
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+};
+
+function jsonResponse(payload, status = 200) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store",
+      ...SECURITY_HEADERS,
+    },
+  });
+}
+
+function htmlResponse(html) {
+  return new Response(html, {
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "public, max-age=60",
+      ...SECURITY_HEADERS,
+    },
+  });
+}
+
+export default {
+  async fetch(request) {
+    const url = new URL(request.url);
+
+    if (url.pathname === "/health") {
+      return jsonResponse({ ok: true, service: "gestorgrupos", ts: new Date().toISOString() });
+    }
+
+    if (url.pathname === "/" || url.pathname === "/index.html") {
+      return htmlResponse(APP_HTML);
+    }
+
+    return new Response("Not Found", {
+      status: 404,
+      headers: {
+        "content-type": "text/plain; charset=utf-8",
+        ...SECURITY_HEADERS,
+      },
+    });
+  },
+};
