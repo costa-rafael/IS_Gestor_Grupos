@@ -31,7 +31,6 @@ html,body{height:100%;background:radial-gradient(circle at top left,#ffffff 0,#e
 .sidebar{width:240px;flex-shrink:0;background:var(--surface);backdrop-filter:blur(14px);border-right:1px solid var(--border);display:flex;flex-direction:column}
 .sidebar-logo{padding:24px 20px 18px;border-bottom:1px solid var(--border)}
 .logo-mark{display:flex;align-items:center;gap:10px;margin-bottom:4px}
-.logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--teal),#0ea5e9);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
 .logo-name{font-size:16px;font-weight:700;letter-spacing:-.3px}
 .logo-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-left:0}
 .sidebar-nav{flex:1;padding:12px 10px;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
@@ -257,7 +256,7 @@ tbody tr.hid{display:none}
     <div class="panel active" id="panel-1">
       <div class="ph"><div class="ph-title">Importar Lista de Alunos</div><div class="ph-desc">Carrega um ficheiro Excel ou CSV. A aplicação detecta automaticamente as colunas de número, nome e email.</div></div>
       <div class="dz" id="dz">
-        <input type="file" id="fi" accept=".xlsx,.xls,.csv"/>
+        <input type="file" id="fi" accept=".xlsx,.xls,.xlsm,.xlsb,.csv"/>
         <span class="dz-icon">UPLOAD</span>
         <div class="dz-title">Arrasta o ficheiro ou clica para seleccionar</div>
         <div class="dz-sub">Detecção automática de colunas — Número, Nome, Email...</div>
@@ -434,22 +433,47 @@ fi.addEventListener('change',e=>{if(e.target.files[0])parseFile(e.target.files[0
 
 function nh(t){return String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase()}
 
+function csvToRows(text){
+  const lines=text.split(/\r?\n/).filter(l=>l.trim());
+  if(!lines.length)return [];
+  const d=[',',';','\t'].reduce((b,x)=>lines[0].split(x).length>lines[0].split(b).length?x:b,',');
+  return lines.map(l=>l.split(d).map(c=>c.trim()));
+}
+
+function sheetRows(sheet){
+  return XLSX.utils.sheet_to_json(sheet,{header:1,raw:false,defval:''});
+}
+
+function pickBestSheetRows(wb){
+  const NA=['nome','nomes','name','aluno','alunos','student'],
+        NU=['numero','numeros','num','number','id','nº','no','codigo','codigos'],
+        EA=['email','mail','e-mail','correio'];
+  let bestRows=[],bestScore=-1;
+  wb.SheetNames.forEach(sn=>{
+    const rows=sheetRows(wb.Sheets[sn]);
+    const nonEmpty=rows.filter(r=>(r||[]).some(c=>String(c||'').trim())).length;
+    if(!nonEmpty)return;
+    const hdr=(rows.slice(0,8).flat().map(nh));
+    const hits=hdr.filter(h=>NA.some(a=>h.includes(a))||NU.some(a=>h.includes(a))||EA.some(a=>h.includes(a))).length;
+    const score=nonEmpty+(hits*6);
+    if(score>bestScore){bestScore=score;bestRows=rows;}
+  });
+  return bestRows;
+}
+
 function parseFile(file){
-  const ext=file.name.split('.').pop().toLowerCase();
+  const ext=(file.name.split('.').pop()||'').toLowerCase();
   const r=new FileReader();
   r.onload=e=>{
     try{
-      let rows;
-      if(ext==='csv'){
-        const lines=e.target.result.split(/\r?\n/).filter(l=>l.trim());
-        const d=[',',';','\t'].reduce((b,x)=>lines[0].split(x).length>lines[0].split(b).length?x:b,',');
-        rows=lines.map(l=>l.split(d).map(c=>c.trim()));
-      } else {
+      let rows=[];
+      if(ext==='csv')rows=csvToRows(e.target.result);
+      else {
         const wb=XLSX.read(e.target.result,{type:'array'});
-        rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''});
+        rows=pickBestSheetRows(wb);
       }
       extractStudents(rows);
-    }catch(err){toast('Erro ao ler: '+err.message,'err')}
+    }catch(err){toast('Erro ao ler ficheiro: '+err.message,'err')}
   };
   if(ext==='csv')r.readAsText(file);else r.readAsArrayBuffer(file);
 }
@@ -457,40 +481,77 @@ function parseFile(file){
 function extractStudents(rows){
   if(!rows||!rows.length){toast('Ficheiro vazio.','err');return}
   const NA=['nome','nomes','name','aluno','alunos','student'],
-        NU=['numero','num','number','id','nº','no','codigo','código'],
+        NU=['numero','numeros','num','number','id','nº','no','codigo','codigos'],
         EA=['email','mail','e-mail','correio'];
-  let hRow=-1,nC=-1,uC=-1,eC=-1;
-  for(let i=0;i<Math.min(5,rows.length);i++){
-    const row=rows[i]||[];let fn=false,fu=false;
+
+  let hRow=-1,nCand=[],uCand=[],eCand=[];
+  for(let i=0;i<Math.min(20,rows.length);i++){
+    const row=rows[i]||[];
+    let rowHasHeader=false;
     for(let c=0;c<row.length;c++){
       const h=nh(row[c]);
-      if(NA.some(a=>h.includes(a))){nC=c;fn=true}
-      if(NU.some(a=>h===a||h.startsWith(a))){uC=c;fu=true}
-      if(EA.some(a=>h.includes(a)))eC=c;
+      if(NA.some(a=>h.includes(a))){if(!nCand.includes(c))nCand.push(c);rowHasHeader=true}
+      if(NU.some(a=>h===a||h.startsWith(a)||h.includes(a))){if(!uCand.includes(c))uCand.push(c);rowHasHeader=true}
+      if(EA.some(a=>h.includes(a))){if(!eCand.includes(c))eCand.push(c);rowHasHeader=true}
     }
-    if(fn||fu){hRow=i;break}
+    if(rowHasHeader&&hRow===-1)hRow=i;
   }
+
   const ds=hRow>=0?hRow+1:0;
-  const dr=rows.slice(ds).filter(r=>r.some(c=>String(c||'').trim()));
-  if(nC===-1){
-    const mc=Math.max(...dr.map(r=>r.length));
-    let b=0,bs=-Infinity;
-    for(let c=0;c<mc;c++){let sc=0;dr.slice(0,50).forEach(r=>{const v=String(r[c]||'').trim();if(/[A-Za-zÀ-ÖØ-öø-ÿ]/.test(v))sc+=2;if(/^\d+$/.test(v))sc-=2;if(v.includes(' '))sc++;});if(sc>bs){bs=sc;b=c;}}
-    nC=b;
+  const dr=rows.slice(ds).filter(r=>r&&r.some(c=>String(c||'').trim()));
+  if(!dr.length){toast('Ficheiro sem linhas de alunos.','err');return}
+  const mc=Math.max(...dr.map(r=>r.length),0);
+
+  function scoreCol(c,type){
+    let score=0;
+    const sample=dr.slice(0,120);
+    sample.forEach(r=>{
+      const v=String(r[c]||'').trim();
+      if(!v)return;
+      if(type==='name'){
+        if(/[A-Za-zÀ-ÖØ-öø-ÿ]/.test(v))score+=3;
+        if(v.includes(' '))score+=1;
+        if(/@/.test(v))score-=3;
+        if(/^\d+$/.test(v))score-=5;
+      }
+      if(type==='num'){
+        if(/^\d{4,10}$/.test(v))score+=3;
+        if(/[A-Za-z]/.test(v))score-=2;
+      }
+      if(type==='email'){
+        if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v))score+=5;
+        else if(/@/.test(v))score+=2;
+      }
+    });
+    return score;
   }
-  if(uC===-1){const mc=Math.max(...dr.map(r=>r.length));for(let c=0;c<mc;c++){if(c===nC)continue;const ns=dr.filter(r=>/^\d{4,8}$/.test(String(r[c]||'').trim()));if(ns.length>dr.length*.5){uC=c;break}}}
+
+  function bestCol(cands,type,exclude=-1){
+    let cols=(cands&&cands.length)?cands:Array.from({length:mc},(_,i)=>i);
+    cols=cols.filter(c=>c!==exclude);
+    let best=-1,bScore=-Infinity;
+    cols.forEach(c=>{const sc=scoreCol(c,type);if(sc>bScore){bScore=sc;best=c}});
+    return best;
+  }
+
+  const nC=bestCol(nCand,'name');
+  const uC=bestCol(uCand,'num',nC);
+  const eC=bestCol(eCand,'email',nC);
+
   const seen=new Set();
   students=dr.map((r,i)=>({
     num:uC>=0?String(r[uC]||'').trim():String(i+1),
-    name:String(r[nC]||'').trim(),
+    name:nC>=0?String(r[nC]||'').trim():'',
     email:eC>=0?String(r[eC]||'').trim():'',
     sel:true
   })).filter(s=>{
     if(!s.name||/^\d+$/.test(s.name))return false;
-    if(seen.has(s.name))return false;
-    seen.add(s.name);return true;
+    const k=\`\${s.num}::\${s.name}\`;
+    if(seen.has(k))return false;
+    seen.add(k);return true;
   });
-  if(!students.length){toast('Nenhum nome encontrado.','err');return}
+
+  if(!students.length){toast('Nenhum nome encontrado. Verifica o cabeçalho da coluna de nomes.','err');return}
   toast(\`\${students.length} alunos importados!\`,'ok');
   const b1=document.getElementById('btn1next');if(b1)b1.disabled=false;
   updSidebar();navTo(2);
