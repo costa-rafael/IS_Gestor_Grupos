@@ -1,4 +1,4 @@
-const APP_HTML = `<!doctype html>
+<!doctype html>
 <html lang="pt">
 <head>
   <meta charset="UTF-8" />
@@ -411,10 +411,10 @@ const APP_HTML = `<!doctype html>
         importedStudents.forEach((student, index) => {
            const div = document.createElement('div');
            div.className = 'student-check-item';
-           div.innerHTML = \`<input type="checkbox" id="chk_\${student.id}" checked onchange="updateSelectionCount()">
-                            <label for="chk_\${student.id}" style="cursor:pointer; flex: 1;">
-                               \${escapeHtml(student.nome)} <span class="muted mono" style="margin-left: 8px;">\${escapeHtml(student.numero)}</span>
-                            </label>\`;
+           div.innerHTML = `<input type="checkbox" id="chk_${student.id}" checked onchange="updateSelectionCount()">
+                            <label for="chk_${student.id}" style="cursor:pointer; flex: 1;">
+                               ${escapeHtml(student.nome)} <span class="muted mono" style="margin-left: 8px;">${escapeHtml(student.numero)}</span>
+                            </label>`;
            listDiv.appendChild(div);
         });
         
@@ -547,11 +547,11 @@ const APP_HTML = `<!doctype html>
        card.className = 'group' + (isUnassigned ? ' unassigned-panel' : '');
        card.setAttribute('ondragover', 'allowDrop(event)');
        card.setAttribute('ondragleave', 'leaveDrop(event)');
-       card.setAttribute('ondrop', \`drop(event, '\${groupId}')\`);
+       card.setAttribute('ondrop', `drop(event, '${groupId}')`);
 
        const header = document.createElement('h3');
        const count = isUnassigned ? unassignedStudents.length : groupObj.members.length;
-       header.innerHTML = \`<span>\${escapeHtml(groupObj.name)}</span><span class="mono">\${count} alunos</span>\`;
+       header.innerHTML = `<span>${escapeHtml(groupObj.name)}</span><span class="mono">${count} alunos</span>`;
        card.appendChild(header);
 
        const members = isUnassigned ? unassignedStudents : groupObj.members;
@@ -566,8 +566,8 @@ const APP_HTML = `<!doctype html>
              const row = document.createElement('div');
              row.className = 'member';
              row.setAttribute('draggable', 'true');
-             row.setAttribute('ondragstart', \`drag(event, '\${student.id}', '\${groupId}')\`);
-             row.innerHTML = \`<span>\${escapeHtml(student.nome)}</span><span class="mono">\${escapeHtml(student.numero)}</span>\`;
+             row.setAttribute('ondragstart', `drag(event, '${student.id}', '${groupId}')`);
+             row.innerHTML = `<span>${escapeHtml(student.nome)}</span><span class="mono">${escapeHtml(student.numero)}</span>`;
              card.appendChild(row);
            });
        }
@@ -621,7 +621,7 @@ const APP_HTML = `<!doctype html>
 
     async function sendEmailViaAPI() {
        if (window.location.protocol === 'file:') {
-           return setLog('A exportação por email requer servidor backend. Inicie com: npm run dev.', true);
+           return setLog('A exportação por email requer servidor backend. Inicie localmente com: npm run dev.', true);
        }
 
        const email = document.getElementById('emailTo').value.trim();
@@ -657,7 +657,7 @@ const APP_HTML = `<!doctype html>
             const err = await res.json();
             throw new Error(err.error || 'Erro no servidor API.');
          }
-         setLog(\`Email enviado para \${email} com sucesso!\`);
+         setLog(`Email enviado para ${email} com sucesso!`);
          document.getElementById('emailTo').value = '';
        } catch (err) {
          setLog('Falha ao enviar: ' + err.message, true);
@@ -698,75 +698,4 @@ const APP_HTML = `<!doctype html>
     }
   </script>
 </body>
-</html>`;
-
-function json(data, init = {}) {
-  return new Response(JSON.stringify(data), {
-    ...init,
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store",
-      ...(init.headers || {}),
-    },
-  });
-}
-
-export default {
-  async fetch(request, env) {
-    const url = new URL(request.url);
-
-    if (url.pathname === "/health") {
-      return json({ ok: true, service: "gestor-grupos-v2", ts: new Date().toISOString() });
-    }
-
-    if (url.pathname === "/api/send-email" && request.method === "POST") {
-      try {
-        const payload = await request.json();
-        
-        const mailChannelsResp = await fetch("https://api.mailchannels.net/tx/v1/send", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-                personalizations: [{ to: [{ email: payload.to, name: "Destinatário" }] }],
-                from: {
-                    email: env.MAIL_FROM || "noreply@gestor.local",
-                    name: env.MAIL_FROM_NAME || "Gestor de Grupos Premium"
-                },
-                subject: "Os seus Grupos Gerados",
-                content: [{ 
-                    type: "text/html", 
-                    value: "<p>Olá!</p><p>A geração dos grupos foi concluída com sucesso. Encontra em anexo o ficheiro Excel (.xlsx) com a distribuição final dos alunos.</p><p><br/><i>Gestor de Grupos Premium</i></p>" 
-                }],
-                attachments: payload.attachmentBase64 ? [{
-                  mime_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                  filename: payload.filename || "grupos.xlsx",
-                  content: payload.attachmentBase64
-                }] : undefined
-            })
-        });
-
-        if (!mailChannelsResp.ok) {
-            const errText = await mailChannelsResp.text();
-            return json({ ok: false, error: errText }, { status: mailChannelsResp.status });
-        }
-        return json({ ok: true });
-      } catch(e) {
-        return json({ ok: false, error: e.message }, { status: 500 });
-      }
-    }
-
-    if (url.pathname === "/" || url.pathname === "/index.html") {
-      return new Response(APP_HTML, {
-        headers: {
-          "content-type": "text/html; charset=utf-8",
-          "cache-control": "no-store",
-          "x-content-type-options": "nosniff",
-          "x-frame-options": "DENY",
-          "referrer-policy": "strict-origin-when-cross-origin",
-        },
-      });
-    }
-
-    return json({ ok: false, error: "not_found" }, { status: 404 });
-  },
-};
+</html>
