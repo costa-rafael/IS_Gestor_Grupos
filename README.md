@@ -1,147 +1,77 @@
-# Gestor de Grupos de Alunos
+# 🍏 SmartGroups - Gestor de Grupos Premium
 
-Aplicação web para criação, organização e exportação de grupos de alunos.
-
-## Visão Geral
-
-A aplicação simplifica a formação de grupos em contexto letivo com um fluxo em 4 passos:
-
-1. **Importar** alunos via Excel/CSV
-2. **Configurar** estratégia de agrupamento
-3. **Organizar** automaticamente ou por drag & drop
-4. **Exportar** resultados para Excel e envio por email
+Uma aplicação web moderna, minimalista e altamente interativa inspirada nos princípios de design da Apple para **criação, organização e exportação de pautas de alunos** em grupos de trabalho.
 
 ---
 
-## Principais Funcionalidades
+## 🌟 Visão Geral
 
-- Importação de ficheiros `.xlsx`, `.xls` e `.csv`
-- Deteção automática de cabeçalho na primeira linha (ex.: `Nome`)
-- Dois modos de agrupamento:
-  - 🎲 **Aleatório** (balanceado)
-  - ✋ **Manual** (drag & drop)
-- Configuração por:
-  - número de grupos, ou
-  - número de alunos por grupo
-- Indicação de alunos não atribuídos
-- Exportação para Excel com todos os grupos
-- Envio opcional por email (MailChannels API)
-- Endpoint técnico de monitorização: `GET /health`
+O **SmartGroups** simplifica a gestão de equipes com um fluxo de trabalho em **4 passos sequenciais**, concebidos para proporcionar uma experiência livre de distrações e totalmente fluida:
+
+1. 📥 **Importar**: Carrega a pauta de alunos (Excel/CSV) e filtra quem participa.
+2. ⚙️ **Configurar**: Define o tamanho dos grupos e o modo de distribuição com controlos Apple-style.
+3. 🎲 **Resultados**: Organiza instantaneamente e ajusta via *Drag & Drop* inteligente com feedback visual.
+4. ✉️ **Partilhar**: Envia a composição por email ou descarrega em formato `.xlsx` estruturado.
 
 ---
 
-## Stack Técnica
+## ✨ Funcionalidades "Apple-Coded"
 
-- **Runtime:** JavaScript serverless
-- **UI:** HTML + CSS + JavaScript vanilla (single-file app)
-- **Leitura/Exportação Excel:** SheetJS (`xlsx`)
+### 🎨 Experiência de Utilizador (UX/UI)
+*   **Segmented Controls & Apple Steppers**: Seleções e ajustes numéricos através de interfaces táteis e elegantes.
+*   **Sem Barras de Scroll Visíveis**: Interface limpa e focada, ocultando rastros cinzentos enquanto mantém navegação natural.
+*   **Header Compacto**: Maximiza o espaço útil no ecrã para focar no conteúdo e cartões de dados.
+
+### ✋ Gestão Interativa de Grupos
+*   **Duplo-Clique para Renomear**: Edita o nome de qualquer grupo (*inline*) com um duplo-clique rápido no título.
+*   **Feedback de Arraste (Drag State)**: Os cartões de alunos ganham elevação, rotação suave e opacidade ao serem suspensos.
+*   **Animação "Pop-In"**: Novos alunos entram nos grupos com micro-animações sequenciais suaves.
 
 ---
 
-## Estrutura do Projeto
+## 🛠️ Stack Técnica
+
+*   **Runtime:** JavaScript Serverless (compatível com Cloudflare Workers)
+*   **Frontend:** HTML5 + Vanilla CSS3 (Single-file template renderizado dinamicamente)
+*   **Bibliotecas:** SheetJS (`xlsx`) para parsing e exportações nativas.
+
+---
+
+## 📂 Estrutura do Projeto
 
 ```text
 student-groups/
-├── worker.js        # Worker principal (frontend + endpoints)
-├── wrangler.toml    # Configuração do deployment
-├── package.json     # Scripts de desenvolvimento/deploy
-└── README.md
+├── worker.js        # Backend Serverless + Frontend Dinâmico
+├── wrangler.toml    # Configurações de Deployment da Cloudflare
+├── package.json     # Scripts e Dependências
+└── README.md        # Documentação Geral
 ```
 
 ---
 
-## Requisitos
+## 🚀 Como Executar Localmente
 
-- Node.js 18+
-- Conta Cloudflare
-- Wrangler autenticado
+1. Instala as dependências:
+   ```bash
+   npm install
+   ```
 
----
+2. Corre o servidor de desenvolvimento:
+   ```bash
+   npm run dev
+   ```
 
----
-
-## Como Executar Localmente
-
-```bash
-npm install
-npm run dev
-```
-
-Aplicação disponível em `http://localhost:8787`.
+A aplicação ficará disponível em `http://localhost:8787`.
 
 ---
 
-## Deploy
+## ✉️ Fluxo de Partilha
 
-```bash
-npm run deploy
-```
-
-Publica no teu ambiente serverless preferido e configura as variáveis de email.
+*   **Email Nativo**: A aplicação prioriza o envio direto por email através de formulário integrado.
+*   **Exportação Excel**: Disponível como ação secundária para guardar relatórios `.xlsx` locais organizados por Colunas (`Grupo`, `Número`, `Nome`, `Email`).
 
 ---
 
-## Configuração de Email
+## 📜 Licença
 
-Por omissão, o projeto usa **MailChannels** para envio de email.
-
-### Variáveis recomendadas
-
-```bash
-npx wrangler secret put MAIL_FROM
-npx wrangler secret put MAIL_FROM_NAME
-```
-
-Exemplo:
-
-- `MAIL_FROM=noreply@teu-dominio.pt`
-- `MAIL_FROM_NAME=Gestor de Grupos`
-
-> Nota: para maior entregabilidade, usa domínio com SPF/DKIM devidamente configurado.
-
----
-
-## Formato Esperado do Ficheiro de Alunos
-
-- Pode ter múltiplas colunas (ex.: `Número`, `Nome`)
-- A app tenta detetar automaticamente a coluna de nomes
-- Cabeçalhos são identificados e ignorados na leitura dos dados
-
-Exemplo:
-
-| Nome |
-|---|
-| Ana Silva |
-| Bruno Costa |
-| Carla Mendes |
-
----
-
-## Operação e Qualidade
-
-- Interface orientada por etapas para reduzir erros operacionais
-- Feedback visual por toasts e indicadores de estado
-- Compatível com execução nativa em Workers (sem `nodejs_compat`)
-
----
-
-## Segurança e Boas Práticas
-
-- Uso de secrets via Wrangler para credenciais sensíveis
-- Endpoint `/health` para integração com monitorização externa
-- Headers de segurança/CORS aplicados no worker
-
----
-
-## Roadmap Sugerido
-
-- Persistência de sessões (KV / D1)
-- Histórico de turmas e templates de grupos
-- Regras de equilíbrio (ex.: género, desempenho, afinidade)
-- Internacionalização (PT/EN)
-
----
-
-## Licença
-
-MIT
+Distribuído sob a Licença MIT.
