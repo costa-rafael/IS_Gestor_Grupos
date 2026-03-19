@@ -2,10 +2,9 @@ name = "gestorgrupos"
 main = "./worker.js"
 compatibility_date = "2024-11-01"
 workers_dev = true
-[build]
-command = "npm install"
 
 # Optional: custom domain
 # [[routes]]
 # pattern = "grupofacil.exemplo.pt/*"
 # zone_name = "exemplo.pt"
+
