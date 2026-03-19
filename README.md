@@ -1,4 +1,4 @@
-# 🍏 SmartGroups - Gestor de Grupos Premium
+# 🍏 SmartGroups - Gestor de Grupos
 
 Uma aplicação web moderna, minimalista e altamente interativa inspirada nos princípios de design da Apple para **criação, organização e exportação de pautas de alunos** em grupos de trabalho.
 
