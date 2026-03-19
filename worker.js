@@ -639,7 +639,7 @@ const APP_HTML = `<!doctype html>
           div.setAttribute('ondragover', 'allowDrop(event)'); div.setAttribute('ondragleave', 'leaveDrop(event)'); div.setAttribute('ondrop', \\\`drop(event, '\\\${g.id}')\\\`);
           div.innerHTML = \\\`<h3><span style='cursor: text;' title='Duplo-clique para renomear' ondblclick='editGroupName(\"\\\${g.id}\\\")' id='name_\\\${g.id}'>\\\${escapeHtml(g.name)}</span><span class='mono'>\\\${g.members.length}</span></h3>\\\`;
          const cDiv = document.createElement('div'); cDiv.className = 'group-content';
-         if (!g.members.length) cDiv.innerHTML = `<div style="padding:20px; color:var(--text-muted); text-align:center; font-size:12px;">Vazio</div>`;
+         if (!g.members.length) cDiv.innerHTML = '<div style="padding:20px; color:var(--text-muted); text-align:center; font-size:12px;">Vazio</div>';
          else g.members.forEach((s, sIdx) => {
               let anim = s._isAuto ? \\\`animation: popIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) \\\${sIdx * 0.04}s forwards; opacity: 0;\\\` : '';
               delete s._isAuto;
